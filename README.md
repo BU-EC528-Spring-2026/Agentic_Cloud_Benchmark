@@ -1,5 +1,9 @@
 # ACBench Prototype
 
+Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
+
+Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 
+
 `acbench/` is the standalone fusion layer for the first ACBench prototype.
 
 It unifies:
@@ -44,7 +48,7 @@ ACBench should not yet be described as:
 - a fully mature combined live code+ops benchmark suite
 - a guarantee that every upstream SWE-bench instance is stable over time
 
-The correct claim is:
+## The correct claim is:
 
 - this is a working first prototype
 - both live backend families are integrated
