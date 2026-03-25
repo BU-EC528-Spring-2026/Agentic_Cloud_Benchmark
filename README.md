@@ -2,7 +2,7 @@
 
 Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
 
-Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 
+Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 ; Video Link: https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
 
 `acbench/` is the standalone fusion layer for the first ACBench prototype.
 
