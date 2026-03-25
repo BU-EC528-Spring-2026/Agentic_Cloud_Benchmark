@@ -78,6 +78,10 @@ class OpenAIOpsAgentTests(unittest.TestCase):
         self.assertEqual(agent.last_response, 'submit("Yes")')
         self.assertEqual(agent.last_action, '```\nsubmit("Yes")\n```')
 
+    def test_agent_normalizes_single_line_fenced_submit(self) -> None:
+        action = OpenAIOpsAgent._normalize_action('```submit("Yes")```')
+        self.assertEqual(action, '```\nsubmit("Yes")\n```')
+
 
 if __name__ == "__main__":
     unittest.main()

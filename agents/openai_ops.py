@@ -81,12 +81,16 @@ class OpenAIOpsAgent:
     def _normalize_action(response_text: str) -> str:
         text = response_text.strip()
         if text.startswith("```"):
-            lines = text.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
+            single_line_match = re.fullmatch(r"```(?:[a-zA-Z0-9_-]+)?\s*(.*?)\s*```", text, re.DOTALL)
+            if single_line_match:
+                text = single_line_match.group(1).strip()
+            else:
+                lines = text.splitlines()
+                if lines and lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                text = "\n".join(lines).strip()
 
         match = re.search(r'(submit\((?:.|\n)*?\))', text)
         if match:
