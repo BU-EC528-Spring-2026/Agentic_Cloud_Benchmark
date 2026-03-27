@@ -241,6 +241,7 @@ C:\Projects\
 Do not place `AIOpsLab` or `SWE-bench-Live` inside the `Agentic_Cloud_Benchmark/` repository. They should be sibling directories.
 
 ### Step-by-step: add `AIOpsLab`
+[AIOps Repository](https://github.com/microsoft/AIOpsLab)
 
 From the parent workspace directory:
 
@@ -277,6 +278,7 @@ python -m acbench.cli --doctor
 The doctor output should now show the AIOpsLab-related backend information.
 
 ### Step-by-step: add `SWE-bench-Live`
+[Swe-bench-Live Repository](https://github.com/microsoft/SWE-bench-Live)
 
 From the parent workspace directory:
 
