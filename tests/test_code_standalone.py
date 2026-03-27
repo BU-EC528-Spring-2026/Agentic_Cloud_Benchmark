@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from unittest import mock
 import shutil
 import tempfile
 import unittest
@@ -11,6 +12,7 @@ from acbench.backends.code.standalone import (
     apply_patch_without_git,
     capture_git_diff,
     find_subsequence,
+    normalize_command,
     parse_unified_hunks,
     prepare_workspace,
     run_commands,
@@ -40,6 +42,36 @@ class CodeStandaloneTests(unittest.TestCase):
         ok, output = run_commands(['Write-Output "ok"'], self.temp_dir)
         self.assertTrue(ok)
         self.assertIn("ok", output)
+
+    def test_normalize_command_wraps_python_for_windows_powershell(self) -> None:
+        with mock.patch("acbench.backends.code.standalone.os.name", "nt"):
+            with mock.patch(
+                "acbench.backends.code.standalone.sys.executable",
+                r"C:\Projects\Agentic Cloud Benchmark\.venv\Scripts\python.exe",
+            ):
+                normalized, env_overrides = normalize_command(
+                    "python -m compileall src"
+                )
+
+        self.assertEqual(
+            normalized,
+            '& "C:\\Projects\\Agentic Cloud Benchmark\\.venv\\Scripts\\python.exe"'
+            " -m compileall src",
+        )
+        self.assertEqual(env_overrides, {})
+
+    def test_normalize_command_preserves_non_windows_behavior(self) -> None:
+        with mock.patch("acbench.backends.code.standalone.os.name", "posix"):
+            with mock.patch(
+                "acbench.backends.code.standalone.sys.executable",
+                "/tmp/venv/bin/python3",
+            ):
+                normalized, env_overrides = normalize_command(
+                    "$env:PYTHONPATH='src'; python -m unittest"
+                )
+
+        self.assertEqual(normalized, "/tmp/venv/bin/python3 -m unittest")
+        self.assertEqual(env_overrides, {"PYTHONPATH": "src"})
 
     def test_apply_patch_without_git_updates_file(self) -> None:
         repo_dir = self.temp_dir / "repo"

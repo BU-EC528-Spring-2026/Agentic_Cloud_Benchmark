@@ -81,7 +81,11 @@ def normalize_command(command: str) -> tuple[str, dict[str, str]]:
         normalized, env_overrides = _extract_powershell_env_assignments(normalized)
 
     if normalized == "python" or normalized.startswith("python "):
-        normalized = f"{shlex.quote(sys.executable)}{normalized[6:]}"
+        if os.name == "nt":
+            executable = sys.executable.replace('"', '`"')
+            normalized = f'& "{executable}"{normalized[6:]}'
+        else:
+            normalized = f"{shlex.quote(sys.executable)}{normalized[6:]}"
 
     return normalized, env_overrides
 
