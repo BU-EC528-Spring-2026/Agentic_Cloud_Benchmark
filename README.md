@@ -2,7 +2,7 @@
 
 Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
 
-Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 ; Video Link: https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
+Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 
 
 ACBench is a benchmark harness for evaluating AI agents on two task families:
 
@@ -128,6 +128,19 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+What this file covers:
+
+- the Python packages required by the standalone `acbench` repository itself
+- currently, this is intentionally a small dependency set
+
+What this file does not cover:
+
+- the dependencies of the optional sibling `AIOpsLab` repository
+- the dependencies of the optional sibling `SWE-bench-Live` repository
+- system tools such as Docker, Kubernetes, Helm, or kubectl
+
+In other words, `requirements.txt` is the dependency list for the standalone ACBench prototype, not for every optional upstream integration.
+
 ### 6. Install the repository as an editable package
 
 This step is required if you want commands like `python -m acbench.cli ...` to work from a fresh clone.
@@ -239,6 +252,12 @@ git clone <aiopslab-repo-url> AIOpsLab
 - Helm
 - kubectl
 - a working cluster context
+- any Python dependencies required by the `AIOpsLab` repository itself
+
+Important:
+
+- installing `requirements.txt` in this repository does not install `AIOpsLab`'s own Python dependencies
+- if you want the live ops bridge to work, you must also set up the sibling `AIOpsLab` repository according to its own instructions
 
 Check the system tools:
 
@@ -267,6 +286,12 @@ The native SWE-bench path expects:
 
 - Docker
 - a working Docker daemon
+- any Python dependencies required by the `SWE-bench-Live` repository itself
+
+Important:
+
+- installing `requirements.txt` in this repository does not install `SWE-bench-Live`'s own Python dependencies
+- if you want the native SWE-bench bridge to work, you must also set up the sibling `SWE-bench-Live` repository according to its own instructions
 
 Check Docker:
 
