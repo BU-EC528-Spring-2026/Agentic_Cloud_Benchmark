@@ -9,6 +9,7 @@ from openai import OpenAI
 
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 
 
 class OpenAICodePatchAgent:
@@ -33,10 +34,7 @@ class OpenAICodePatchAgent:
         if not run_config.openai_model:
             raise ValueError("RunConfig.openai_model is required for OpenAICodePatchAgent.")
 
-        repo_root = Path(repository_path)
-        if not repo_root.is_absolute():
-            repo_root = Path.cwd() / repo_root
-        repo_root = repo_root.resolve()
+        repo_root = resolve_repo_path(repository_path)
 
         prompt = self._build_prompt(scenario, repo_root)
         client = OpenAI(

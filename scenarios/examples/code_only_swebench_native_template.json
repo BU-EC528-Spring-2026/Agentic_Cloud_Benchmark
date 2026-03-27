@@ -11,7 +11,7 @@
     "source": "swe-bench-live",
     "defect_id": "native-template",
     "description": "Point instance_path at a complete upstream SWE-bench-Live instance JSON extracted from a dataset JSONL file.",
-    "instance_path": "acbench/out/replace_with_instance.json",
+    "instance_path": "out/replace_with_instance.json",
     "platform": "linux"
   },
   "success_criteria": {

@@ -11,7 +11,7 @@
     "source": "swe-bench-live",
     "defect_id": "robbert-vdh__nih-plug-28b149e",
     "description": "Native SWE-bench-Live instance from robbert-vdh/nih-plug.",
-    "instance_path": "acbench\\out\\robbert-vdh__nih-plug-28b149e.json",
+    "instance_path": "out/robbert-vdh__nih-plug-28b149e.json",
     "platform": "linux"
   },
   "success_criteria": {

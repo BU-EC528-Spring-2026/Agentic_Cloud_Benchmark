@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from acbench.models.runtime import RunConfig
+from acbench.paths import repo_root, resolve_repo_path
 from acbench.runner import ACBenchRunner
 
 
@@ -29,7 +30,7 @@ def _resolve_patch_input(
         return str(payload["model_patch_path"])
     if payload.get("model_patch"):
         patch_text = str(payload["model_patch"])
-        out_dir = Path("acbench") / "temp_patches"
+        out_dir = repo_root() / "temp_patches"
         out_dir.mkdir(parents=True, exist_ok=True)
         temp_path = out_dir / f"{scenario.scenario_id}.diff"
         temp_path.write_text(patch_text, encoding="utf-8")
@@ -44,8 +45,8 @@ def evaluate_predictions(
 ) -> dict[str, Any]:
     """Evaluate a prediction bundle against a scenario manifest."""
 
-    manifest_file = Path(manifest_path)
-    predictions_file = Path(predictions_path)
+    manifest_file = resolve_repo_path(manifest_path)
+    predictions_file = resolve_repo_path(predictions_path)
     output_file = Path(output_path)
 
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
@@ -63,7 +64,7 @@ def evaluate_predictions(
     }
 
     for entry in manifest["scenarios"]:
-        scenario_path = Path(entry["scenario"])
+        scenario_path = resolve_repo_path(entry["scenario"])
         scenario = runner.load_scenario(scenario_path)
         pred = predictions.get(scenario.scenario_id)
         if pred is None:

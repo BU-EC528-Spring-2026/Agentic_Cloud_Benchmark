@@ -20,6 +20,7 @@ from acbench.executors.standalone_code import StandaloneCodeExecutor
 from acbench.models.result import BenchmarkResult, ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 from acbench.validate import check_scenario_readiness
 
 
@@ -33,7 +34,7 @@ class ACBenchRunner:
     def load_scenario(self, scenario_path: str | Path) -> ScenarioSpec:
         """Load and validate a scenario specification."""
 
-        return ScenarioSpec.from_file(scenario_path)
+        return ScenarioSpec.from_file(resolve_repo_path(scenario_path))
 
     def create_run_dir(self, scenario: ScenarioSpec) -> Path:
         """Create a stable per-run output directory."""

@@ -6,13 +6,13 @@ from pathlib import Path
 
 
 def workspace_root() -> Path:
-    """Return the workspace root that currently contains `acbench/`."""
+    """Return the workspace root that currently contains this repository."""
 
     return Path(__file__).resolve().parents[1]
 
 
 def acbench_root() -> Path:
-    """Return the `acbench/` package root."""
+    """Return the in-repository root that is exposed as the `acbench` package."""
 
     return Path(__file__).resolve().parent
 

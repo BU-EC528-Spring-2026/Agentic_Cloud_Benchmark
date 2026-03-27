@@ -5,8 +5,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
+import sys
 
 
 def prepare_workspace(source_repo: str | Path, run_dir: str | Path) -> Path:
@@ -45,22 +47,58 @@ def run_commands(commands: list[str], repo_path: str | Path) -> tuple[bool, str]
 def run_single_command(command: str, repo_path: Path) -> subprocess.CompletedProcess[str]:
     """Run one command in the repository path."""
 
+    normalized_command, env_overrides = normalize_command(command)
+    env = os.environ.copy()
+    env.update(env_overrides)
+
     if os.name == "nt":
         return subprocess.run(
-            ["powershell", "-Command", command],
+            ["powershell", "-Command", normalized_command],
             cwd=repo_path,
             capture_output=True,
             text=True,
             encoding="utf-8",
+            env=env,
         )
     return subprocess.run(
-        command,
+        normalized_command,
         cwd=repo_path,
         capture_output=True,
         text=True,
         encoding="utf-8",
+        env=env,
         shell=True,
     )
+
+
+def normalize_command(command: str) -> tuple[str, dict[str, str]]:
+    """Normalize cross-shell command syntax for local fixture execution."""
+
+    normalized = command.strip()
+    env_overrides: dict[str, str] = {}
+
+    if os.name != "nt":
+        normalized, env_overrides = _extract_powershell_env_assignments(normalized)
+
+    if normalized == "python" or normalized.startswith("python "):
+        normalized = f"{shlex.quote(sys.executable)}{normalized[6:]}"
+
+    return normalized, env_overrides
+
+
+def _extract_powershell_env_assignments(command: str) -> tuple[str, dict[str, str]]:
+    """Translate simple PowerShell ``$env:NAME='value';`` prefixes into env overrides."""
+
+    env_overrides: dict[str, str] = {}
+    remaining = command
+    pattern = re.compile(r"^\$env:([A-Za-z_][A-Za-z0-9_]*)=(['\"])(.*?)\2\s*;\s*(.*)$")
+
+    while True:
+        match = pattern.match(remaining)
+        if not match:
+            return remaining, env_overrides
+        env_overrides[match.group(1)] = match.group(3)
+        remaining = match.group(4).lstrip()
 
 
 def capture_git_diff(repo_path: str | Path) -> str:

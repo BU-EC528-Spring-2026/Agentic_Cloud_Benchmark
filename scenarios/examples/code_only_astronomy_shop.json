@@ -6,7 +6,7 @@
     "application": "astronomy-shop",
     "service": "product-catalog-service",
     "deployment": "k8s",
-    "repository_path": "acbench/fixtures/astronomy_shop_placeholder"
+    "repository_path": "fixtures/astronomy_shop_placeholder"
   },
   "code_fault": {
     "source": "acbench",

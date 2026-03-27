@@ -43,7 +43,7 @@ Expected workspace layout:
 
 ```text
 <workspace>/
-  acbench/
+  Agentic_Cloud_Benchmark/
   AIOpsLab/
   SWE-bench-Live/
 ```

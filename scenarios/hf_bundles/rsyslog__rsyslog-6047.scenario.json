@@ -11,7 +11,7 @@
     "source": "swe-bench-live",
     "defect_id": "rsyslog__rsyslog-6047",
     "description": "Native SWE-bench-Live instance from rsyslog/rsyslog.",
-    "instance_path": "acbench\\scenarios\\hf_bundles\\rsyslog__rsyslog-6047.instance.json",
+    "instance_path": "scenarios/hf_bundles/rsyslog__rsyslog-6047.instance.json",
     "platform": "linux"
   },
   "success_criteria": {

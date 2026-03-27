@@ -11,7 +11,7 @@
     "source": "swe-bench-live",
     "defect_id": "uutils__coreutils-8447",
     "description": "Native SWE-bench-Live instance from uutils/coreutils.",
-    "instance_path": "acbench\\scenarios\\hf_candidates\\uutils__coreutils-8447.instance.json",
+    "instance_path": "scenarios/hf_candidates/uutils__coreutils-8447.instance.json",
     "platform": "linux"
   },
   "success_criteria": {

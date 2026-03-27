@@ -6,7 +6,7 @@
     "application": "acbench-local-fixture",
     "service": "samplepkg",
     "deployment": "local",
-    "repository_path": "acbench/fixtures/local_repo_buggy"
+    "repository_path": "fixtures/local_repo_buggy"
   },
   "code_fault": {
     "source": "acbench",
@@ -40,6 +40,6 @@
     "code",
     "fixture"
   ],
-  "notes": "Use this with --code-patch acbench/patches/local_repo_buggy_fix.diff to validate the minimal patch-based code benchmark path.",
-  "gold_patch_path": "acbench/patches/local_repo_buggy_fix.diff"
+  "notes": "Use this with --code-patch patches/local_repo_buggy_fix.diff to validate the minimal patch-based code benchmark path.",
+  "gold_patch_path": "patches/local_repo_buggy_fix.diff"
 }

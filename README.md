@@ -79,14 +79,14 @@ If `python` does not point to Python 3.11, use your platform-specific Python 3.1
 ### 2. Clone this repository
 
 ```bash
-git clone <your-repo-url> acbench
-cd acbench
+git clone <your-repo-url> Agentic_Cloud_Benchmark
+cd Agentic_Cloud_Benchmark
 ```
 
 At this point your directory should look like:
 
 ```text
-acbench/
+Agentic_Cloud_Benchmark/
   README.md
   requirements.txt
   pyproject.toml
@@ -130,7 +130,7 @@ python -m pip install -r requirements.txt
 
 What this file covers:
 
-- the Python packages required by the standalone `acbench` repository itself
+- the Python packages required by the standalone `Agentic_Cloud_Benchmark` repository itself
 - currently, this is intentionally a small dependency set
 
 What this file does not cover:
@@ -144,6 +144,8 @@ In other words, `requirements.txt` is the dependency list for the standalone ACB
 ### 6. Install the repository as an editable package
 
 This step is required if you want commands like `python -m acbench.cli ...` to work from a fresh clone.
+
+The repository directory can be named `Agentic_Cloud_Benchmark`, but the installed Python package name remains `acbench`.
 
 ```bash
 python -m pip install -e .
@@ -213,7 +215,7 @@ Put all repositories side by side inside one parent directory:
 
 ```text
 <workspace>/
-  acbench/
+  Agentic_Cloud_Benchmark/
   AIOpsLab/
   SWE-bench-Live/
 ```
@@ -222,7 +224,7 @@ Example:
 
 ```text
 ~/projects/
-  acbench/
+  Agentic_Cloud_Benchmark/
   AIOpsLab/
   SWE-bench-Live/
 ```
@@ -231,12 +233,12 @@ or on Windows:
 
 ```text
 C:\Projects\
-  acbench\
+  Agentic_Cloud_Benchmark\
   AIOpsLab\
   SWE-bench-Live\
 ```
 
-Do not place `AIOpsLab` or `SWE-bench-Live` inside the `acbench/` repository. They should be sibling directories.
+Do not place `AIOpsLab` or `SWE-bench-Live` inside the `Agentic_Cloud_Benchmark/` repository. They should be sibling directories.
 
 ### Step-by-step: add `AIOpsLab`
 
@@ -266,7 +268,7 @@ kubectl version --client
 helm version
 ```
 
-Then return to the `acbench/` repository and run:
+Then return to the `Agentic_Cloud_Benchmark/` repository and run:
 
 ```bash
 python -m acbench.cli --doctor
@@ -300,7 +302,7 @@ docker --version
 docker ps
 ```
 
-Then return to the `acbench/` repository and run:
+Then return to the `Agentic_Cloud_Benchmark/` repository and run:
 
 ```bash
 python -m acbench.cli --doctor
@@ -340,7 +342,7 @@ python -m acbench.cli --scenario scenarios/hf_candidates/casey__just-2835.scenar
 If you are trying to reproduce the repository on a new machine, follow this order exactly:
 
 1. Install Git and Python 3.11.
-2. Clone `acbench`.
+2. Clone `Agentic_Cloud_Benchmark`.
 3. Create and activate a virtual environment.
 4. Run `python -m pip install -r requirements.txt`.
 5. Run `python -m pip install -e .`.

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from acbench.evaluate import evaluate_predictions
+from acbench.paths import resolve_repo_path
 from acbench.report import write_markdown_report
 
 
@@ -17,8 +18,8 @@ def run_local_demo(output_dir: str | Path) -> dict:
     md_path = target_dir / "local_suite_report.md"
 
     results = evaluate_predictions(
-        manifest_path=Path("acbench/manifests/local_suite.json"),
-        predictions_path=Path("acbench/predictions/local_gold.json"),
+        manifest_path=resolve_repo_path("manifests/local_suite.json"),
+        predictions_path=resolve_repo_path("predictions/local_gold.json"),
         output_path=json_path,
     )
     write_markdown_report(results, md_path)

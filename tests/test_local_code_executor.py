@@ -39,8 +39,8 @@ class LocalCodeExecutorTests(unittest.TestCase):
                     "defect_id": "d1",
                 },
                 "build": {
-                    "rebuild_cmds": ['Write-Output "build-ok"'],
-                    "test_cmds": ['Write-Output "test-ok"'],
+                    "rebuild_cmds": ['python -c "print(\'build-ok\')"'],
+                    "test_cmds": ['python -c "print(\'test-ok\')"'],
                 },
                 "success_criteria": {
                     "require_build_success": True,

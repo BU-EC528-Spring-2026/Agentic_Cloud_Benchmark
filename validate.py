@@ -13,6 +13,7 @@ from acbench.backends.ops.native_upstream import (
 )
 from acbench.doctor import inspect_acbench_code_backend, inspect_aiopslab
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 
 
 @dataclass(slots=True)
@@ -130,9 +131,7 @@ def check_scenario_readiness(scenario: ScenarioSpec) -> ScenarioReadinessReport:
         )
 
         if native_swebench_instance:
-            instance_path = Path(scenario.code_fault.instance_path)
-            if not instance_path.is_absolute():
-                instance_path = Path.cwd() / instance_path
+            instance_path = resolve_repo_path(scenario.code_fault.instance_path)
             if not instance_path.exists():
                 issues.append(
                     ReadinessIssue(
@@ -163,9 +162,7 @@ def check_scenario_readiness(scenario: ScenarioSpec) -> ScenarioReadinessReport:
                         )
                     )
         elif scenario.service.repository_path:
-            repo_path = Path(scenario.service.repository_path)
-            if not repo_path.is_absolute():
-                repo_path = Path.cwd() / repo_path
+            repo_path = resolve_repo_path(scenario.service.repository_path)
             if not repo_path.exists():
                 issues.append(
                     ReadinessIssue(

@@ -11,7 +11,7 @@
     "source": "swe-bench-live",
     "defect_id": "casey__just-2835",
     "description": "Native SWE-bench-Live instance from casey/just.",
-    "instance_path": "acbench\\scenarios\\hf_candidates\\casey__just-2835.instance.json",
+    "instance_path": "scenarios/hf_candidates/casey__just-2835.instance.json",
     "platform": "linux"
   },
   "success_criteria": {

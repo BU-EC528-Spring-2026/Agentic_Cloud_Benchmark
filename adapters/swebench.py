@@ -17,6 +17,7 @@ from acbench.executors.base import BenchmarkExecutor
 from acbench.models.result import ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 
 
 SWEBenchPreflight = NativeSWEBenchEnvironment
@@ -132,15 +133,11 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
             )
         patch_text = ""
         if run_config.code_patch_path:
-            patch_file = Path(run_config.code_patch_path)
-            if not patch_file.is_absolute():
-                patch_file = Path.cwd() / patch_file
+            patch_file = resolve_repo_path(run_config.code_patch_path)
             if patch_file.exists():
                 patch_text = patch_file.read_text(encoding="utf-8")
 
-        instance_path = Path(scenario.code_fault.instance_path)
-        if not instance_path.is_absolute():
-            instance_path = Path.cwd() / instance_path
+        instance_path = resolve_repo_path(scenario.code_fault.instance_path)
         instance = json.loads(instance_path.read_text(encoding="utf-8"))
         instance["instance_id"] = instance.get("instance_id", scenario.scenario_id)
         if patch_text:
@@ -236,9 +233,7 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
     def inspect_native_instance_file(cls, instance_path: str | Path) -> dict[str, Any]:
         """Inspect one native SWE-bench-Live instance JSON file for required fields."""
 
-        resolved = Path(instance_path)
-        if not resolved.is_absolute():
-            resolved = Path.cwd() / resolved
+        resolved = resolve_repo_path(instance_path)
         payload = json.loads(resolved.read_text(encoding="utf-8"))
         missing_fields = [
             field_name

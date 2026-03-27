@@ -17,6 +17,7 @@ from acbench.executors.base import BenchmarkExecutor
 from acbench.models.result import ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 
 
 class LocalCodeExecutor(BenchmarkExecutor):
@@ -31,10 +32,7 @@ class LocalCodeExecutor(BenchmarkExecutor):
         run_dir: Path,
         run_config: RunConfig,
     ) -> ExecutorResult:
-        repo_path = Path(scenario.service.repository_path or "")
-        if not repo_path.is_absolute():
-            repo_path = Path.cwd() / repo_path
-        repo_path = repo_path.resolve()
+        repo_path = resolve_repo_path(scenario.service.repository_path or "")
         workspace_path = prepare_workspace(repo_path, run_dir)
 
         pre_patch_log_path = run_dir / "pre_patch_test.log"
@@ -58,10 +56,7 @@ class LocalCodeExecutor(BenchmarkExecutor):
             run_dir=run_dir,
         )
         if patch_file_path:
-            patch_file = patch_file_path
-            if not patch_file.is_absolute():
-                patch_file = Path.cwd() / patch_file
-            patch_file = patch_file.resolve()
+            patch_file = resolve_repo_path(patch_file_path)
             apply_success, applied_patch = self._apply_patch(workspace_path, patch_file)
             apply_log_path.write_text(applied_patch, encoding="utf-8")
 
@@ -80,7 +75,9 @@ class LocalCodeExecutor(BenchmarkExecutor):
         )
         patch_output = self._capture_git_diff(workspace_path)
         if not patch_output and run_config.code_patch_path:
-            patch_output = Path(run_config.code_patch_path).read_text(encoding="utf-8")
+            patch_output = resolve_repo_path(run_config.code_patch_path).read_text(
+                encoding="utf-8"
+            )
 
         build_log_path.write_text(build_output, encoding="utf-8")
         test_log_path.write_text(test_output, encoding="utf-8")

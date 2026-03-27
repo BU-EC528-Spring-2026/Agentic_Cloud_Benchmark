@@ -12,6 +12,7 @@ from acbench.executors.base import BenchmarkExecutor
 from acbench.models.result import ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
+from acbench.paths import resolve_repo_path
 
 
 class StandaloneCodeExecutor(BenchmarkExecutor):
@@ -70,14 +71,14 @@ class StandaloneCodeExecutor(BenchmarkExecutor):
     ) -> dict:
         patch_text = patch_override
         if not patch_text and run_config.code_patch_path:
-            patch_file = Path(run_config.code_patch_path)
-            if not patch_file.is_absolute():
-                patch_file = Path.cwd() / patch_file
+            patch_file = resolve_repo_path(run_config.code_patch_path)
             if patch_file.exists():
                 patch_text = patch_file.read_text(encoding="utf-8")
+        repo_path = scenario.service.repository_path or ""
+        resolved_repo_path = str(resolve_repo_path(repo_path)) if repo_path else ""
         return {
             "instance_id": scenario.scenario_id,
-            "repo": scenario.service.repository_path or "",
+            "repo": resolved_repo_path,
             "platform": scenario.code_fault.platform if scenario.code_fault else "windows",
             "rebuild_cmds": list(scenario.build.rebuild_cmds),
             "test_cmds": list(scenario.build.test_cmds),

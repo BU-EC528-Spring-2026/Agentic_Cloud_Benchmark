@@ -21,8 +21,8 @@ class EvaluateTests(unittest.TestCase):
 
     def test_local_gold_manifest_evaluation(self) -> None:
         results = evaluate_predictions(
-            manifest_path=Path("acbench/manifests/local_suite.json"),
-            predictions_path=Path("acbench/predictions/local_gold.json"),
+            manifest_path=Path("manifests/local_suite.json"),
+            predictions_path=Path("predictions/local_gold.json"),
             output_path=self.output_path,
         )
 
