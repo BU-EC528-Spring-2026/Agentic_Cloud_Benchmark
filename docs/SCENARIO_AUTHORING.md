@@ -1,143 +1,93 @@
 # Scenario Authoring
 
-This guide explains how to add new scenarios to the current ACBench prototype.
+Scenarios define benchmark tasks. They live under `scenarios/`.
 
-## Scenario Types
+## Where To Start
 
-The prototype currently supports three practical scenario shapes:
+The easiest way to learn the format is to read the example scenarios:
 
-1. local `code_only`
-2. local `combined`
-3. native `SWE-bench-Live` code scenarios
+- `scenarios/examples/code_only_local_repo_buggy.json`
+- `scenarios/examples/combined_local_fixture.json`
+- `scenarios/examples/ops_only_astronomy_shop.json`
 
-`AIOpsLab` live scenarios are also supported, but they should usually reuse known upstream problem IDs first.
+## Scenario Categories
 
-## 1. Local Code Scenario
+### Local examples
 
-Use this when:
+Directory:
 
-- you want a stable local benchmark
-- you want to test patch/build/test flow without upstream containers
+- `scenarios/examples/`
 
-Reference:
+Use these for:
 
-- `acbench/scenarios/examples/code_only_local_repo_buggy.json`
+- learning the format
+- local standalone prototype runs
+- creating new local tasks
 
-Important fields:
+### Native SWE-bench candidates
 
-- `mode: code_only`
-- `service.repository_path`
-- `code_fault.source: acbench`
-- `build.rebuild_cmds`
-- `build.test_cmds`
-- `gold_patch_path`
+Directory:
 
-## 2. Local Combined Scenario
+- `scenarios/hf_candidates/`
 
-Use this when:
+Use these for:
 
-- you want one benchmark that includes both ops and code
-- you want a safe demo path
+- native SWE-bench benchmark tasks
+- optional upstream bridge workflows
 
-Reference:
+## Typical Local Code Scenario Inputs
 
-- `acbench/scenarios/examples/combined_local_fixture.json`
+A local code scenario usually specifies:
 
-Important fields:
+- repository path
+- build commands
+- test commands
+- success criteria
+- code fault metadata
 
-- `mode: combined`
-- `ops_fault.source: acbench`
-- `code_fault.source: acbench`
+The local buggy repository example uses:
 
-## 3. Native SWE-bench-Live Scenario
+- `fixtures/local_repo_buggy`
 
-Use this when:
+## Typical Ops Scenario Inputs
 
-- you want to benchmark against a real upstream SWE-bench-Live instance
+An ops scenario usually specifies:
 
-There are two common creation paths.
+- service or problem metadata
+- backend selection
+- ops fault metadata
+- evaluation mode
 
-### From HuggingFace
+The live astronomy-shop example uses:
 
-```powershell
-python -m acbench.cli ^
-  --dataset-name SWE-bench-Live/MultiLang ^
-  --dataset-split rust ^
-  --instance-id <instance_id> ^
-  --scaffold-native-swebench-hf-bundle acbench\scenarios\hf_candidates
+- `scenarios/examples/ops_only_astronomy_shop.json`
+
+## Validation
+
+Validate a scenario with:
+
+```bash
+python -m acbench.cli --validate-scenario scenarios/examples/code_only_local_repo_buggy.json
 ```
 
-### From a local JSONL dataset
+## Export
 
-```powershell
-python -m acbench.cli ^
-  --dataset-jsonl <dataset.jsonl> ^
-  --instance-id <instance_id> ^
-  --scaffold-native-swebench-bundle acbench\scenarios\bundles
+You can export a scenario into a SWE-bench-style instance with:
+
+```bash
+python -m acbench.cli --export-swebench-instance scenarios/examples/code_only_local_repo_buggy.json --output out/code_only_local_repo_buggy.instance.json
 ```
 
-This produces:
+## Recommended Workflow
 
-- `<instance_id>.instance.json`
-- `<instance_id>.scenario.json`
+1. Copy an existing example from `scenarios/examples/`.
+2. Edit the fields you need.
+3. Validate the scenario.
+4. Run it locally.
+5. Add tests if you are changing scenario-loading behavior.
 
-Important fields in the generated scenario:
+## Related Documents
 
-- `mode: code_only`
-- `code_fault.source: swe-bench-live`
-- `code_fault.instance_path`
-- `code_fault.platform`
-
-## Export Note
-
-`--export-swebench-instance` now follows the current backend split:
-
-- repository-backed scenarios export through the internal `acbench-code-standalone` payload path
-- native scenarios export through the native `swe-bench-live-native` payload path
-
-## 4. Validate Before Running
-
-Always run:
-
-```powershell
-python -m acbench.cli --validate-scenario --scenario <scenario.json>
-python -m acbench.cli --check-readiness --scenario <scenario.json>
-```
-
-For native SWE-bench scenarios, readiness checks:
-
-- required instance fields
-- docker image presence
-- backend import readiness
-- docker availability
-
-## 5. Naming Guidance
-
-Use names that make benchmark purpose obvious.
-
-Examples:
-
-- `code_only_local_repo_buggy`
-- `combined_local_fixture`
-- `swebench_native_casey__just-2835`
-
-## 6. Stability Guidance
-
-Prefer:
-
-- local scenarios for demos and regression tests
-- known-good native SWE-bench instances for live code demos
-- existing AIOpsLab problems for live ops demos
-
-Avoid:
-
-- adding many live instances before checking readiness
-- assuming upstream terminal noise means failure
-- using incomplete native instance JSON files
-
-## 7. Current Good References
-
-- local code: `acbench/scenarios/examples/code_only_local_repo_buggy.json`
-- local combined: `acbench/scenarios/examples/combined_local_fixture.json`
-- native swebench live: `acbench/scenarios/hf_candidates/casey__just-2835.scenario.json`
-- live ops example: `acbench/scenarios/examples/ops_only_astronomy_shop.json`
+- [README](../README.md)
+- [Quickstart](QUICKSTART.md)
+- [Commands](COMMANDS.md)

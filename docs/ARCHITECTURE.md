@@ -1,164 +1,120 @@
 # Architecture
 
-This document explains how the ACBench prototype is organized and where to extend it.
+ACBench has four main layers.
 
-## Top-Level Shape
+## 1. Entry Layer
 
-`acbench/` is the prototype repository root. The important directories are:
+Top-level files in the repository root:
 
-- `agents/`: API-backed and scripted benchmark agents
-- `adapters/`: live upstream bridges for `AIOpsLab` and `SWE-bench-Live`
-- `backends/`: internal runtime, engine, and runner layers for code and ops
-- `executors/`: concrete executors selected by the benchmark runner
-- `fixtures/`: local repositories and placeholder service assets
-- `models/`: scenario and result models
-- `patches/`: reference local patches
-- `scenarios/`: runnable benchmark scenario definitions
-- `scripts/`: repository maintenance utilities
-- `tests/`: regression tests
-- `docs/`: onboarding, environment, and extension documentation
+- `cli.py`: command-line entry point
+- `runner.py`: top-level orchestration
+- `validate.py`: scenario and backend validation
+- `doctor.py`: environment inspection
+- `evaluate.py`: batch evaluation
+- `report.py`: report generation
+- `export.py`: export utilities
 
-## Main Execution Flow
+## 2. Execution Layer
 
-Most runs go through this path:
+Directories:
 
-1. `cli.py`
-2. `runner.py`
-3. scenario validation and readiness checks
-4. executor selection
-5. normalized result writing
+- `executors/`
+- `adapters/`
 
-The runner always writes a run bundle under `acbench/runs/<run_id>/`.
+### Executors
 
-## Code Path
+Executors are used when ACBench itself performs the work.
 
-There are two code backends.
+Examples:
 
-### `acbench-code-standalone`
-
-This is the internal repository-backed code path.
-
-Relevant files:
-
-- `executors/standalone_code.py`
 - `executors/local_code.py`
+- `executors/local_ops.py`
+- `executors/standalone_code.py`
+
+### Adapters
+
+Adapters are used when ACBench bridges into upstream systems.
+
+Examples:
+
+- `adapters/aiopslab.py`
+- `adapters/swebench.py`
+
+## 3. Internal Backend Layer
+
+Directory:
+
+- `backends/`
+
+This is the internal runtime / engine / runner layer used by the execution paths.
+
+### Code backend
+
 - `backends/code/runtime.py`
+- `backends/code/engine.py`
 - `backends/code/runner.py`
 - `backends/code/standalone.py`
-
-Use this path for:
-
-- local buggy repository fixtures
-- API-backed code repair experiments
-- stable demos and regression tests
-
-### `swe-bench-live-native`
-
-This is the native upstream bridge for full SWE-bench-Live instances.
-
-Relevant files:
-
-- `adapters/swebench.py`
 - `backends/code/native_upstream.py`
 
-Use this path for:
+### Ops backend
 
-- native instance JSON scenarios
-- upstream-compatible live code benchmarking
-
-## Ops Path
-
-There are also two ops layers.
-
-### Internal local ops path
-
-Relevant files:
-
-- `executors/local_ops.py`
 - `backends/ops/runtime.py`
 - `backends/ops/engine.py`
 - `backends/ops/runner.py`
-
-Use this path for:
-
-- local synthetic ops behavior
-- combined local scenarios
-- future standalone ops backend work
-
-### `aiopslab` live bridge
-
-Relevant files:
-
-- `adapters/aiopslab.py`
 - `backends/ops/native_upstream.py`
 
-Use this path for:
+## 4. Asset Layer
 
-- real live `AIOpsLab` scenarios
-- Kubernetes-backed ops benchmarking
+Directories:
 
-## Agent Extension Points
+- `scenarios/`: benchmark task definitions
+- `fixtures/`: local benchmark assets
+- `patches/`: reference patches
+- `predictions/`: evaluation inputs
+- `manifests/`: suite definitions
 
-### Code agents
+## Agents
 
-Current example:
+Directory:
+
+- `agents/`
+
+Important examples:
 
 - `agents/openai_code.py`
-
-Expected behavior:
-
-- inspect the scenario and relevant files
-- generate a unified diff patch
-- return a patch path that ACBench can apply
-
-### Ops agents
-
-Current examples:
-
 - `agents/openai_ops.py`
-- `agents/scripted.py`
 
-Expected behavior:
+These provide the OpenAI-backed prototype paths.
 
-- optionally implement `configure(run_config)`
-- implement `init_context(problem_desc, instructions, apis)`
-- implement `async get_action(input_text)`
+## Typical Flow
 
-For live `AIOpsLab` compatibility, return legal actions such as:
+For a standalone local code run:
 
-- `submit("Yes")`
-- `submit("No")`
+1. `cli.py` parses the command.
+2. `runner.py` loads the scenario.
+3. `validate.py` checks the scenario.
+4. `executors/local_code.py` runs the task.
+5. `agents/openai_code.py` generates a patch if configured.
+6. result artifacts are written under `runs/`.
 
-## How To Add A New Scenario
+For a live ops bridge run:
 
-Start with:
+1. `cli.py` parses the command.
+2. `runner.py` loads the scenario.
+3. `adapters/aiopslab.py` bridges into AIOpsLab.
+4. `agents/openai_ops.py` produces the action.
+5. ACBench normalizes the final result and artifacts under `runs/`.
 
-- [SCENARIO_AUTHORING.md](/C:/Projects/ACBench/acbench/docs/SCENARIO_AUTHORING.md)
+## Cleanup
 
-In practice:
-
-- for code work, copy an example from `scenarios/examples/`
-- for native SWE-bench work, scaffold from the CLI
-- for live ops work, start from an existing `AIOpsLab`-backed example
-
-## How To Add A New Backend Feature
-
-Recommended order:
-
-1. add or update runtime models under `backends/<domain>/runtime.py`
-2. add or update execution logic under `backends/<domain>/engine.py` or `runner.py`
-3. update the corresponding executor or adapter
-4. add tests under `tests/`
-5. update `README.md` and the relevant guide
-
-## How To Keep The Repository Clean
-
-Generated artifacts should not be committed.
-
-Use:
+Generated artifacts can be cleaned with:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File acbench\scripts\cleanup_generated.ps1
+powershell -ExecutionPolicy Bypass -File scripts\cleanup_generated.ps1
 ```
 
-Generated directories are already ignored through `acbench/.gitignore`.
+## Related Documents
+
+- [README](../README.md)
+- [Quickstart](QUICKSTART.md)
+- [Scenario Authoring](SCENARIO_AUTHORING.md)

@@ -1,126 +1,82 @@
 # Demo Guide
 
-This guide is for presenting the current ACBench prototype to teammates or an advisor.
+This guide is for recording or presenting the prototype.
 
-## Recommended Demo Order
+## Recommended Story
 
-Use this order:
+Present ACBench as a benchmark layer with two modes:
 
-1. show environment readiness
-2. show the API-backed code prototype
-3. show the API-backed ops prototype
-4. optionally show a safe local demo
-5. optionally show the real upstream bridge paths
-6. show generated run reports
+1. standalone local mode
+2. optional upstream bridge mode
 
-## 1. Environment Readiness
+The cleanest demo is:
 
-```powershell
-python -m acbench.cli --doctor
+1. show the standalone local code prototype
+2. show the live AIOpsLab ops prototype
+
+This demonstrates both benchmark families without requiring you to explain every internal module.
+
+## Demo 1: Standalone Local Code Prototype
+
+Command:
+
+```bash
+python -m acbench.cli --scenario scenarios/examples/code_only_local_repo_buggy.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
-Optional saved report:
+What to say:
 
-```powershell
-python -m acbench.cli --write-readiness-report acbench\runs\readiness_report.json
+- ACBench loads a local buggy repository fixture.
+- The model generates a patch.
+- ACBench applies the patch, runs tests, and scores the outcome.
+- This path works with this repository alone.
+
+What to show afterward:
+
+- `runs/<timestamp>/summary.json`
+- `runs/<timestamp>/openai_generated_patch.diff`
+- `runs/<timestamp>/result.json`
+
+## Demo 2: Live AIOpsLab Ops Prototype
+
+Requirements:
+
+- sibling `AIOpsLab/` checkout
+- Kubernetes
+- Helm
+- kubectl
+
+Command:
+
+```bash
+python -m acbench.cli --scenario scenarios/examples/ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --max-steps 1
 ```
 
-## 2. API-Backed Code Prototype
+What to say:
 
-```powershell
-$env:OPENAI_API_KEY="<your-key>"
-python -m acbench.cli --scenario acbench\scenarios\examples\code_only_local_repo_buggy.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
-```
+- ACBench launches a live ops benchmark path through AIOpsLab.
+- The service is deployed.
+- A fault is injected.
+- The agent submits a detection decision.
+- ACBench normalizes the final score and artifacts.
 
-Show:
+What to show afterward:
 
-- the buggy local repository fixture
-- the generated patch artifact
-- the final `result.json` and `summary.json`
+- `runs/<timestamp>/summary.json`
+- `runs/<timestamp>/aiops_agent_prompt.txt`
+- `runs/<timestamp>/aiops_agent_response.txt`
+- `runs/<timestamp>/result.json`
 
-## 3. API-Backed Ops Prototype
+## Suggested Closing Message
 
-```powershell
-$env:OPENAI_API_KEY="<your-key>"
-python -m acbench.cli --scenario acbench\scenarios\examples\ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --max-steps 1
-```
+Use a short summary:
 
-Show:
+> Standalone mode proves that ACBench already works as an independent benchmark prototype.
+> Optional bridge mode shows that the same interface can also evaluate live upstream systems.
 
-- the live astronomy-shop fault injection
-- the saved agent prompt / response / action files
-- the final detection result in `result.json`
+## Practical Recording Advice
 
-## 4. Optional Safe Local Demo
-
-```powershell
-python -m acbench.cli --run-local-demo acbench\demo_out
-```
-
-Show:
-
-- `acbench/demo_out/local_suite_eval.json`
-- `acbench/demo_out/local_suite_report.md`
-
-## 5. Optional Real SWE-bench Native Demo
-
-Use the first confirmed successful sample:
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\hf_candidates\casey__just-2835.scenario.json
-```
-
-Then generate a single-run markdown report:
-
-```powershell
-python -m acbench.cli ^
-  --run-dir acbench\runs\swebench_native_casey__just-2835-20260324-020909-010779 ^
-  --write-run-markdown-report acbench\reports\casey__just-2835.md
-```
-
-Important message for the audience:
-
-- upstream terminal logs may look noisy
-- benchmark success should be judged from `result.json` and `summary.json`
-- ACBench normalizes the final outcome
-
-## 6. Optional Real AIOpsLab Live Demo
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\examples\ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.scripted:DetectionYesAIOpsAgent --max-steps 1
-```
-
-Use this to show the upstream bridge path without the API-backed prototype agent.
-
-## 7. What To Highlight
-
-When presenting, emphasize:
-
-- one unified benchmark layer
-- working API-backed code benchmark
-- working API-backed ops benchmark
-- optional live upstream bridges
-- local fallback for stable development
-- standardized outputs
-
-The key artifacts are:
-
-- `result.json`
-- `summary.json`
-- `diagnostics.json`
-- markdown reports
-
-## 8. What Not To Claim
-
-Do not claim yet:
-
-- a full benchmark catalog
-- a production leaderboard
-- stable success for every upstream SWE-bench instance
-
-The correct claim is:
-
-- the first prototype is working
-- both API-backed prototype paths are working
-- both live backend families are integrated as optional bridges
-- at least one real successful sample exists for each family
+- Record from the repository root.
+- Keep the terminal font large.
+- Do not leave long infrastructure waits unedited if you are recording a short demo.
+- Show the final `summary.json` after each run; it is easier to read than the full `result.json`.

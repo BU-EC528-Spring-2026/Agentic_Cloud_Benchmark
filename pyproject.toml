@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acbench-prototype"
+version = "0.1.0"
+description = "Standalone benchmark prototype for code-repair and ops evaluation."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=1.0.0",
+]
+
+[tool.setuptools]
+package-dir = { acbench = "." }
+packages = [
+  "acbench",
+  "acbench.adapters",
+  "acbench.agents",
+  "acbench.backends",
+  "acbench.backends.code",
+  "acbench.backends.ops",
+  "acbench.executors",
+  "acbench.models",
+]

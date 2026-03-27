@@ -1,126 +1,79 @@
 # Environment
 
-This document describes the current environment expectations for the ACBench prototype.
+This document explains which environments are required for each ACBench capability.
 
-## Current Reality
+## Baseline Requirements
 
-The prototype already has:
+For the standalone local prototype:
 
-- stable local fallback paths
-- a working real `AIOpsLab` live path
-- a working real `SWE-bench-Live` native path
-- a working internal repository-backed code path under `acbench-code-standalone`
-- internal native-upstream probing layers for both code and ops backends
+- Python 3.11
+- `pip`
+- a virtual environment
+- Python dependencies from `requirements.txt`
+- editable install via `python -m pip install -e .`
 
-So this document is no longer a list of future requirements only. It is a reference for keeping those paths healthy and reproducible.
+Optional, depending on what you run:
 
-## Core Checks
+- OpenAI API key for OpenAI-backed agent runs
 
-Use:
+## Standalone Local Mode
 
-```powershell
-python -m acbench.cli --doctor
+This mode requires only this repository.
+
+Supported capabilities:
+
+- local code benchmark
+- OpenAI-backed local code repair prototype
+- local demo suite
+- local scenario validation
+- local report generation
+
+This mode does not require:
+
+- `AIOpsLab`
+- `SWE-bench-Live`
+- Kubernetes
+- Docker for the local code fixture path
+
+## Optional Upstream Bridge Mode
+
+This mode adds live integrations through sibling repositories.
+
+Expected workspace layout:
+
+```text
+<workspace>/
+  acbench/
+  AIOpsLab/
+  SWE-bench-Live/
 ```
 
-Or save a full readiness report:
+### AIOpsLab Live Ops Path
 
-```powershell
-python -m acbench.cli --write-readiness-report acbench\runs\readiness_report.json
-```
+Requires:
 
-The readiness bundle now separates:
+- sibling `AIOpsLab/` checkout
+- Kubernetes
+- Helm
+- kubectl
 
-- `aiopslab`
-- `acbench_code`
-- `swe_bench_live_native`
+Used for:
 
-## AIOpsLab Live Requirements
+- `scenarios/examples/ops_only_astronomy_shop.json`
 
-The `AIOpsLab` live path depends on:
+### SWE-bench Native Path
 
-- Python modules required by the upstream repo
-- `kubectl`
-- `helm`
-- a reachable Kubernetes context
-- the local AIOpsLab checkout and config
+Requires:
 
-The current live executor still reports backend name:
+- sibling `SWE-bench-Live/` checkout
+- Docker
 
-- `aiopslab`
+Used for:
 
-But environment probing for this path is now isolated under:
+- scenarios under `scenarios/hf_candidates/`
 
-- `acbench/backends/ops/native_upstream.py`
+## Notes on Platform Choice
 
-Useful command:
-
-```powershell
-python -m acbench.cli --check-readiness --scenario acbench\scenarios\examples\ops_only_astronomy_shop.json
-```
-
-Known good live command:
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\examples\ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.scripted:DetectionYesAIOpsAgent --max-steps 1
-```
-
-## SWE-bench-Live Native Requirements
-
-The native `SWE-bench-Live` path depends on:
-
-- Python modules required by the upstream repo
-- Docker daemon availability
-- a complete native instance JSON
-- a usable upstream docker image for that instance
-
-In diagnostics and normalized results, this path should now appear as:
-
-- `swe-bench-live-native`
-
-Useful command:
-
-```powershell
-python -m acbench.cli --check-readiness --scenario acbench\scenarios\hf_candidates\casey__just-2835.scenario.json
-```
-
-Known good live command:
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\hf_candidates\casey__just-2835.scenario.json
-```
-
-Important:
-
-- native instance stability is still upstream-instance-dependent
-- a structurally valid instance can still drift over time
-- final success should be judged from `result.json` and `summary.json`
-- native runs should now appear with backend name `swe-bench-live-native`
-
-## Local Fallback Paths
-
-The local fallback paths are the safest way to keep development and demos stable.
-
-### Local code
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\examples\code_only_local_repo_buggy.json
-python -m acbench.cli --scenario acbench\scenarios\examples\code_only_local_repo_buggy.json --code-patch acbench\patches\local_repo_buggy_fix.diff
-```
-
-### Local combined
-
-```powershell
-python -m acbench.cli --scenario acbench\scenarios\examples\combined_local_fixture.json --code-patch acbench\patches\local_repo_buggy_fix.diff
-```
-
-## Practical Guidance
-
-Use this order when checking a new machine:
-
-1. `--doctor`
-2. local demo
-3. local combined scenario
-4. native SWE-bench sample
-5. AIOpsLab live sample
-
-That keeps debugging simple and separates environment issues from benchmark logic issues.
+- Linux is preferred for live integrations.
+- PowerShell commands are documented because local development also occurred on Windows.
+- The standalone local prototype is the least fragile path and should be your first verification target on a fresh machine.
