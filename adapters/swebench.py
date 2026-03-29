@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from acbench.agents.loader import load_object
 from acbench.backends.code.engine import build_engine_for_instance
 from acbench.backends.code.native_upstream import (
     NativeSWEBenchEnvironment,
@@ -54,7 +55,13 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
                 "SWEBenchCodeExecutor only supports native SWE-bench-Live "
                 "scenarios with code_fault.instance_path."
             )
-        instance = self.build_instance_payload(scenario, run_config)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        agent_artifacts = self._resolve_agent_patch(scenario, run_config, run_dir)
+        instance = self.build_instance_payload(
+            scenario,
+            run_config,
+            patch_override=agent_artifacts.get("patch_text", ""),
+        )
         instance_path = run_dir / "swebench_instance.json"
         instance_path.write_text(json.dumps(instance, indent=2), encoding="utf-8")
         prediction_path = run_dir / "swebench_prediction.json"
@@ -81,6 +88,11 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
             "instance_path": str(instance_path),
             "prediction_path": str(prediction_path),
             "report_path": str((run_dir / "swebench_eval" / instance["instance_id"] / "report.json")),
+            **{
+                key: value
+                for key, value in agent_artifacts.items()
+                if key != "patch_text"
+            },
         }
         return result
 
@@ -121,6 +133,7 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
     def build_instance_payload(
         scenario: ScenarioSpec,
         run_config: RunConfig,
+        patch_override: str = "",
     ) -> dict[str, Any]:
         """Load one native SWE-bench-Live instance payload for evaluation."""
 
@@ -131,19 +144,43 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
                 "SWEBenchCodeExecutor.build_instance_payload only supports "
                 "native scenarios with code_fault.instance_path."
             )
-        patch_text = ""
-        if run_config.code_patch_path:
-            patch_file = resolve_repo_path(run_config.code_patch_path)
-            if patch_file.exists():
-                patch_text = patch_file.read_text(encoding="utf-8")
-
         instance_path = resolve_repo_path(scenario.code_fault.instance_path)
         instance = json.loads(instance_path.read_text(encoding="utf-8"))
         instance["instance_id"] = instance.get("instance_id", scenario.scenario_id)
+        patch_text = patch_override
+        patch_mode = (run_config.code_patch_path or "").strip()
         if patch_text:
             instance["pred_patch"] = patch_text
-        elif "pred_patch" not in instance:
+        elif patch_mode.lower() == "gold":
             instance["pred_patch"] = instance.get("patch", "")
+        elif patch_mode:
+            patch_file = resolve_repo_path(patch_mode)
+            if not patch_file.exists():
+                raise ValueError(
+                    "Requested --code-patch file does not exist: "
+                    f"{run_config.code_patch_path}"
+                )
+            instance["pred_patch"] = patch_file.read_text(encoding="utf-8")
+        elif "pred_patch" in instance:
+            instance["pred_patch"] = instance.get("pred_patch", "")
+        elif run_config.code_agent_ref:
+            instance["pred_patch"] = ""
+        else:
+            raise ValueError(
+                "Native SWE-bench execution requires one of: an instance pred_patch, "
+                "--code-agent-ref, or --code-patch gold / --code-patch <file>."
+            )
+
+        if not isinstance(instance["pred_patch"], str):
+            raise ValueError("Native SWE-bench pred_patch must be a string.")
+
+        if not instance["pred_patch"] and patch_mode.lower() == "gold":
+            raise ValueError(
+                "Requested --code-patch gold, but the native instance does not contain a patch."
+            )
+
+        if "pred_patch" in instance and instance["pred_patch"] is None:
+            instance["pred_patch"] = ""
         instance["platform"] = instance.get("platform", scenario.code_fault.platform or "linux")
         instance["PASS_TO_PASS"] = list(instance.get("PASS_TO_PASS", []))
         instance["FAIL_TO_PASS"] = list(instance.get("FAIL_TO_PASS", []))
@@ -153,6 +190,27 @@ class SWEBenchCodeExecutor(BenchmarkExecutor):
         instance["test_patch"] = instance.get("test_patch", "")
         instance["log_parser"] = instance.get("log_parser", instance.get("parser", ""))
         return instance
+
+    @staticmethod
+    def _resolve_agent_patch(
+        scenario: ScenarioSpec,
+        run_config: RunConfig,
+        run_dir: Path,
+    ) -> dict[str, str]:
+        if run_config.code_patch_path or not run_config.code_agent_ref:
+            return {}
+
+        agent_cls = load_object(run_config.code_agent_ref)
+        agent = agent_cls()
+        if not hasattr(agent, "generate_patch"):
+            raise ValueError(
+                f"Configured code agent `{run_config.code_agent_ref}` does not expose `generate_patch`."
+            )
+        return agent.generate_patch(
+            scenario=scenario,
+            run_config=run_config,
+            output_dir=run_dir,
+        )
 
     @classmethod
     def normalize_report(

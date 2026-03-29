@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from pathlib import PurePosixPath
 import sys
 from typing import Protocol
+import uuid
 
 from acbench.backends.code.runner import run_local_code_request
 from acbench.backends.code.runtime import CodeRunOutcome, CodeRunRequest, NativeCodeInstance
@@ -72,6 +74,9 @@ class UpstreamSWEBenchEngine:
         sys.path.insert(0, str(repo_root / "launch"))
         try:
             from evaluation.evaluation import run_instance
+            from launch.core.runtime import SetupRuntime
+
+            _patch_upstream_setup_runtime(SetupRuntime)
 
             output_dir.mkdir(parents=True, exist_ok=True)
             return run_instance(
@@ -84,6 +89,44 @@ class UpstreamSWEBenchEngine:
             for path in (str(repo_root / "launch"), str(repo_root)):
                 if path in sys.path:
                     sys.path.remove(path)
+
+
+def _patch_upstream_setup_runtime(setup_runtime_cls) -> None:
+    """Patch upstream runtime path joins so Linux container paths stay POSIX on Windows hosts."""
+
+    if getattr(setup_runtime_cls, "_acbench_posix_patch", False):
+        return
+
+    original_apply_patch = setup_runtime_cls.apply_patch
+
+    def patched_apply_patch(self, patch: str, verbose: bool = False) -> bool:
+        if self.platform != "linux":
+            return original_apply_patch(self, patch, verbose=verbose)
+
+        output_temp = "\n\n<<<<<<PATCH FAILED TO APPLY CLEANLY\n{out}\n>>>>>>\n\n"
+        filename = f"{uuid.uuid4()}.diff"
+        hostpath = Path(self.mnt_host) / filename
+        hostpath.write_text(patch, encoding="utf-8")
+        container_dir = str(PurePosixPath(str(self.working_dir)))
+        containerpath = str(PurePosixPath(container_dir) / filename)
+
+        # Avoid mounted-temp path edge cases on Windows hosts by copying the patch
+        # directly into the Linux container workspace.
+        self.copy_to_container(str(hostpath), container_dir)
+
+        cmd = f'git apply --reject  --whitespace=nowarn  "{containerpath}" '
+        res = self.send_command(cmd)
+        self.send_command(f'rm "{containerpath}"')
+        hostpath.unlink(missing_ok=True)
+        if int(res.metadata.exit_code) == 0:
+            print(f"{cmd} ---- Patch applied Successfully!", flush=True)
+            return True
+        if verbose:
+            print(output_temp.format(out=res.output), flush=True)
+        return False
+
+    setup_runtime_cls.apply_patch = patched_apply_patch
+    setup_runtime_cls._acbench_posix_patch = True
 
 
 def build_default_engine() -> CodeRuntimeEngine:

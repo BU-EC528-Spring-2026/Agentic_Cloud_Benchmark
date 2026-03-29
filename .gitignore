@@ -1,6 +1,7 @@
 runs/
 out/
 demo_out/
+tmp/
 reports/
 .hf_cache/
 build/

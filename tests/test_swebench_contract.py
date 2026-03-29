@@ -83,7 +83,7 @@ class SWEBenchContractTests(unittest.TestCase):
 
             payload = SWEBenchCodeExecutor.build_instance_payload(
                 scenario,
-                RunConfig(dry_run=False),
+                RunConfig(dry_run=False, code_patch_path="gold"),
             )
 
             self.assertEqual(payload["instance_id"], "native-1")

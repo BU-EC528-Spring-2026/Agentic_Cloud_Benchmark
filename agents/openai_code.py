@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
+import re
+from typing import Any
 
 from openai import OpenAI
 
@@ -13,7 +16,7 @@ from acbench.paths import resolve_repo_path
 
 
 class OpenAICodePatchAgent:
-    """Generate a unified diff patch for a repository-backed code task."""
+    """Generate a unified diff patch for repo-backed or native SWE-bench code tasks."""
 
     def generate_patch(
         self,
@@ -22,10 +25,6 @@ class OpenAICodePatchAgent:
         *,
         output_dir: Path,
     ) -> dict[str, str]:
-        repository_path = scenario.service.repository_path or ""
-        if not repository_path:
-            raise ValueError("OpenAICodePatchAgent requires a repository_path.")
-
         api_key = os.environ.get(run_config.openai_api_key_env or "OPENAI_API_KEY", "")
         if not api_key:
             raise ValueError(
@@ -34,9 +33,7 @@ class OpenAICodePatchAgent:
         if not run_config.openai_model:
             raise ValueError("RunConfig.openai_model is required for OpenAICodePatchAgent.")
 
-        repo_root = resolve_repo_path(repository_path)
-
-        prompt = self._build_prompt(scenario, repo_root)
+        prompt = self._build_prompt(scenario)
         client = OpenAI(
             api_key=api_key,
             base_url=run_config.openai_base_url or None,
@@ -47,6 +44,27 @@ class OpenAICodePatchAgent:
         )
         raw_text = getattr(response, "output_text", "") or ""
         patch_text = self._extract_patch(raw_text)
+        patch_text = self._normalize_unified_diff(patch_text)
+        validation_error = self._validate_unified_diff(patch_text)
+        for _ in range(3):
+            if not validation_error:
+                break
+            repair_prompt = self._build_patch_repair_prompt(
+                original_prompt=prompt,
+                invalid_patch=patch_text,
+                validation_error=validation_error,
+            )
+            repair_response = client.responses.create(
+                model=run_config.openai_model,
+                input=repair_prompt,
+            )
+            repair_text = getattr(repair_response, "output_text", "") or ""
+            raw_text = f"{raw_text}\n\n--- PATCH REPAIR ---\n{repair_text}"
+            patch_text = self._extract_patch(repair_text)
+            patch_text = self._normalize_unified_diff(patch_text)
+            validation_error = self._validate_unified_diff(patch_text)
+        if validation_error:
+            raise ValueError(f"Model returned an invalid unified diff after retries: {validation_error}")
 
         prompt_path = output_dir / "openai_prompt.txt"
         response_path = output_dir / "openai_response.txt"
@@ -61,7 +79,20 @@ class OpenAICodePatchAgent:
             "generated_patch_path": str(patch_path),
         }
 
-    def _build_prompt(self, scenario: ScenarioSpec, repo_root: Path) -> str:
+    def _build_prompt(self, scenario: ScenarioSpec) -> str:
+        repository_path = scenario.service.repository_path or ""
+        if repository_path:
+            repo_root = resolve_repo_path(repository_path)
+            return self._build_repository_prompt(scenario, repo_root)
+        if scenario.code_fault and scenario.code_fault.instance_path:
+            instance = self._load_native_instance(scenario.code_fault.instance_path)
+            return self._build_native_swebench_prompt(scenario, instance)
+        raise ValueError(
+            "OpenAICodePatchAgent requires either service.repository_path or "
+            "code_fault.instance_path."
+        )
+
+    def _build_repository_prompt(self, scenario: ScenarioSpec, repo_root: Path) -> str:
         target_files = list(scenario.code_fault.target_files if scenario.code_fault else [])
         if not target_files:
             target_files = self._discover_default_targets(repo_root)
@@ -94,6 +125,274 @@ class OpenAICodePatchAgent:
             "\nReturn only the patch. Do not include explanations, markdown fences, or prose."
         )
         return "\n".join(sections)
+
+    def _build_native_swebench_prompt(
+        self,
+        scenario: ScenarioSpec,
+        instance: dict[str, Any],
+    ) -> str:
+        fail_to_pass = list(instance.get("FAIL_TO_PASS", []))
+        pass_to_pass = list(instance.get("PASS_TO_PASS", []))
+        problem_statement = str(instance.get("problem_statement", "")).strip()
+        hints_text = str(instance.get("hints_text", "")).strip()
+        relevant_fail_to_pass = self._select_relevant_tests(
+            fail_to_pass,
+            problem_statement,
+            hints_text,
+        )
+        relevant_pass_to_pass = self._select_relevant_tests(
+            pass_to_pass,
+            problem_statement,
+            hints_text,
+        )
+        candidate_test_files = self._extract_diff_paths(str(instance.get("test_patch", "")))
+        candidate_commit_urls = list(instance.get("commit_urls", []))[:5]
+        sections = [
+            "You are fixing a native SWE-bench benchmark task.",
+            "Return only a valid unified diff patch.",
+            "Make the smallest plausible fix for the described bug.",
+            "Do not invent files, symbols, or APIs not supported by the issue description.",
+            "Prefer modifying existing logic that matches the hint text over creating new abstractions.",
+            "If you touch tests, keep changes minimal and aligned with the described regression.",
+            f"Scenario ID: {scenario.scenario_id}",
+            f"Title: {scenario.title}",
+            f"Repository: {instance.get('repo', '')}",
+            f"Base commit: {instance.get('base_commit', '')}",
+            f"Problem statement:\n{problem_statement}",
+        ]
+        if hints_text:
+            sections.append(f"High-signal hints:\n{self._compress_text(hints_text, max_lines=20)}")
+        if scenario.notes:
+            sections.append(f"Scenario notes:\n{scenario.notes}")
+        if candidate_test_files:
+            sections.extend(
+                [
+                    "Regression test files referenced by the instance:",
+                    *[f"- {path}" for path in candidate_test_files[:10]],
+                ]
+            )
+        if candidate_commit_urls:
+            sections.extend(
+                [
+                    "Related upstream commit URLs mentioned by the instance:",
+                    *[f"- {url}" for url in candidate_commit_urls],
+                ]
+            )
+        if relevant_fail_to_pass:
+            sections.extend(
+                [
+                    "Most relevant fail-to-pass tests:",
+                    *[f"- {test_name}" for test_name in relevant_fail_to_pass[:40]],
+                ]
+            )
+        elif fail_to_pass:
+            sections.extend(
+                [
+                    "Representative fail-to-pass tests:",
+                    *[f"- {test_name}" for test_name in fail_to_pass[:20]],
+                ]
+            )
+        if relevant_pass_to_pass:
+            sections.extend(
+                [
+                    "Most relevant pass-to-pass tests to avoid regressing:",
+                    *[f"- {test_name}" for test_name in relevant_pass_to_pass[:40]],
+                ]
+            )
+        rebuild_cmds = list(instance.get("rebuild_cmds", []))
+        test_cmds = list(instance.get("test_cmds", []))
+        print_cmds = list(instance.get("print_cmds", []))
+        if rebuild_cmds:
+            sections.extend(["Rebuild commands:", *[f"- {command}" for command in rebuild_cmds]])
+        if test_cmds:
+            sections.extend(["Test commands:", *[f"- {command}" for command in test_cmds]])
+        if print_cmds:
+            sections.extend(["Print commands:", *[f"- {command}" for command in print_cmds]])
+        sections.append(
+            "Do not include explanations, markdown fences, or prose. "
+            "Do not repeat the issue text. Output only the unified diff patch."
+        )
+        return "\n".join(sections)
+
+    @staticmethod
+    def _build_patch_repair_prompt(
+        *,
+        original_prompt: str,
+        invalid_patch: str,
+        validation_error: str,
+    ) -> str:
+        return "\n".join(
+            [
+                "Your previous answer was not a valid unified diff patch.",
+                f"Validation error: {validation_error}",
+                "Return a corrected unified diff patch only.",
+                "Do not include commentary, placeholders, ellipses, or omitted sections.",
+                "Every hunk header must match the actual number of removed and added lines.",
+                "Original task prompt:",
+                original_prompt,
+                "Previous invalid patch:",
+                invalid_patch,
+            ]
+        )
+
+    @staticmethod
+    def _compress_text(text: str, max_lines: int) -> str:
+        lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+        if len(lines) <= max_lines:
+            return "\n".join(lines)
+        return "\n".join(lines[:max_lines])
+
+    @staticmethod
+    def _extract_diff_paths(diff_text: str) -> list[str]:
+        paths: list[str] = []
+        for line in diff_text.splitlines():
+            if not line.startswith("diff --git "):
+                continue
+            parts = line.split()
+            if len(parts) >= 4:
+                raw_path = parts[2]
+                normalized = raw_path[2:] if raw_path.startswith("a/") else raw_path
+                if normalized not in paths:
+                    paths.append(normalized)
+        return paths
+
+    @staticmethod
+    def _select_relevant_tests(
+        tests: list[str],
+        problem_statement: str,
+        hints_text: str,
+    ) -> list[str]:
+        corpus = f"{problem_statement}\n{hints_text}".lower()
+        keywords = {
+            token
+            for token in re.findall(r"[a-zA-Z_]{4,}", corpus)
+            if token not in {"given", "when", "with", "this", "that", "from", "into", "they", "them"}
+        }
+        prioritized = [
+            test_name
+            for test_name in tests
+            if any(keyword in test_name.lower() for keyword in keywords)
+        ]
+        if prioritized:
+            return prioritized
+        return tests
+
+    @staticmethod
+    def _validate_unified_diff(patch_text: str) -> str:
+        text = patch_text.strip()
+        if not text:
+            return "Patch is empty."
+        if "omitted for brevity" in text.lower():
+            return "Patch contains placeholder prose."
+        lines = text.splitlines()
+        if not any(line.startswith("diff --git ") for line in lines):
+            return "Patch does not contain a diff --git header."
+
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if not line.startswith("@@"):
+                i += 1
+                continue
+            match = re.match(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@", line)
+            if not match:
+                return f"Invalid hunk header: {line}"
+            old_count = int(match.group(2) or "1")
+            new_count = int(match.group(4) or "1")
+            removed = 0
+            added = 0
+            i += 1
+            while i < len(lines):
+                current = lines[i]
+                if current.startswith("diff --git ") or current.startswith("@@"):
+                    i -= 1
+                    break
+                if current.startswith(("--- ", "+++ ", "index ")):
+                    i += 1
+                    continue
+                if current.startswith("\\ No newline at end of file"):
+                    i += 1
+                    continue
+                if current.startswith("+"):
+                    added += 1
+                elif current.startswith("-"):
+                    removed += 1
+                elif current.startswith(" "):
+                    removed += 1
+                    added += 1
+                else:
+                    return f"Unsupported diff line: {current}"
+                i += 1
+            if removed != old_count or added != new_count:
+                return (
+                    f"Hunk header count mismatch: expected -{old_count} +{new_count}, "
+                    f"saw -{removed} +{added}."
+                )
+            i += 1
+        return ""
+
+    @staticmethod
+    def _normalize_unified_diff(patch_text: str) -> str:
+        text = patch_text.strip()
+        if not text:
+            return ""
+        lines = text.splitlines()
+        normalized: list[str] = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if not line.startswith("@@"):
+                normalized.append(line)
+                i += 1
+                continue
+
+            match = re.match(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$", line)
+            if not match:
+                normalized.append(line)
+                i += 1
+                continue
+
+            old_start = int(match.group(1))
+            new_start = int(match.group(3))
+            suffix = match.group(5) or ""
+            hunk_lines: list[str] = []
+            i += 1
+            while i < len(lines):
+                current = lines[i]
+                if current.startswith("diff --git ") or current.startswith("@@"):
+                    break
+                hunk_lines.append(current)
+                i += 1
+
+            old_count = 0
+            new_count = 0
+            for current in hunk_lines:
+                if current.startswith("-"):
+                    old_count += 1
+                elif current.startswith("+"):
+                    new_count += 1
+                elif current.startswith(" "):
+                    old_count += 1
+                    new_count += 1
+                elif current.startswith("\\ No newline at end of file"):
+                    continue
+                else:
+                    normalized.append(line)
+                    normalized.extend(hunk_lines)
+                    break
+            else:
+                normalized.append(
+                    f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{suffix}"
+                )
+                normalized.extend(hunk_lines)
+                continue
+
+        return "\n".join(normalized).strip()
+
+    @staticmethod
+    def _load_native_instance(instance_path: str | Path) -> dict[str, Any]:
+        resolved = resolve_repo_path(instance_path)
+        return json.loads(resolved.read_text(encoding="utf-8"))
 
     @staticmethod
     def _discover_default_targets(repo_root: Path) -> list[str]:

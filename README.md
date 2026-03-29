@@ -336,7 +336,7 @@ The repository includes candidate native scenarios under:
 Example:
 
 ```bash
-python -m acbench.cli --scenario scenarios/hf_candidates/casey__just-2835.scenario.json
+python -m acbench.cli --scenario scenarios/hf_candidates/casey__just-2835.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
 ## Fresh-Machine Reproduction Checklist
