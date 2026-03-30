@@ -21,7 +21,7 @@ class ResultModelTests(unittest.TestCase):
             title="t",
             mode="ops_only",
             ops_result=ExecutorResult(
-                backend="aiopslab",
+                backend="acbench-local-ops",
                 success=True,
                 details={"status": _ExampleStatus.OK, "items": (_ExampleStatus.OK,)},
             ),

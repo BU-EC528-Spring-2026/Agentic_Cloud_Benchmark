@@ -1,4 +1,4 @@
-"""Internal code runtime models for migrating away from upstream SWE-bench-Live."""
+"""Internal code runtime models for standalone ACBench."""
 
 from __future__ import annotations
 

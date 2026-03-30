@@ -1,1 +1,1 @@
-"""Internal backend implementations for standalone ACBench execution."""
+"""Internal standalone backend implementations for ACBench execution."""

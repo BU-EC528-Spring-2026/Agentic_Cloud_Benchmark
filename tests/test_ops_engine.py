@@ -8,7 +8,6 @@ from pathlib import Path
 
 from acbench.backends.ops.engine import (
     StandaloneLocalOpsEngine,
-    UpstreamAIOpsLabEngine,
     build_default_engine,
     build_engine_for_problem,
 )
@@ -54,9 +53,9 @@ class OpsEngineTests(unittest.TestCase):
 
         self.assertIsInstance(engine, StandaloneLocalOpsEngine)
 
-    def test_build_default_engine_uses_upstream_aiopslab_placeholder(self) -> None:
+    def test_build_default_engine_uses_standalone_local_engine(self) -> None:
         engine = build_default_engine()
-        self.assertIsInstance(engine, UpstreamAIOpsLabEngine)
+        self.assertIsInstance(engine, StandaloneLocalOpsEngine)
 
 
 if __name__ == "__main__":

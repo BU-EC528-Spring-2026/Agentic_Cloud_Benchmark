@@ -16,11 +16,20 @@ dependencies = [
 package-dir = { acbench = "." }
 packages = [
   "acbench",
-  "acbench.adapters",
   "acbench.agents",
   "acbench.backends",
   "acbench.backends.code",
   "acbench.backends.ops",
   "acbench.executors",
   "acbench.models",
+  "acbench.standalone",
+  "acbench.standalone.benchmarks",
+  "acbench.standalone.benchmarks.code",
+  "acbench.standalone.benchmarks.ops",
+  "acbench.standalone.benchmarks.combined",
+  "acbench.standalone.runtimes",
+  "acbench.standalone.runtimes.code",
+  "acbench.standalone.runtimes.ops",
+  "acbench.standalone.runtimes.combined",
+  "acbench.standalone.services",
 ]

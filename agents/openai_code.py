@@ -16,7 +16,7 @@ from acbench.paths import resolve_repo_path
 
 
 class OpenAICodePatchAgent:
-    """Generate a unified diff patch for repo-backed or native SWE-bench code tasks."""
+    """Generate a unified diff patch for standalone repository-backed code tasks."""
 
     def generate_patch(
         self,
@@ -84,13 +84,7 @@ class OpenAICodePatchAgent:
         if repository_path:
             repo_root = resolve_repo_path(repository_path)
             return self._build_repository_prompt(scenario, repo_root)
-        if scenario.code_fault and scenario.code_fault.instance_path:
-            instance = self._load_native_instance(scenario.code_fault.instance_path)
-            return self._build_native_swebench_prompt(scenario, instance)
-        raise ValueError(
-            "OpenAICodePatchAgent requires either service.repository_path or "
-            "code_fault.instance_path."
-        )
+        raise ValueError("OpenAICodePatchAgent requires service.repository_path.")
 
     def _build_repository_prompt(self, scenario: ScenarioSpec, repo_root: Path) -> str:
         target_files = list(scenario.code_fault.target_files if scenario.code_fault else [])
@@ -126,94 +120,6 @@ class OpenAICodePatchAgent:
         )
         return "\n".join(sections)
 
-    def _build_native_swebench_prompt(
-        self,
-        scenario: ScenarioSpec,
-        instance: dict[str, Any],
-    ) -> str:
-        fail_to_pass = list(instance.get("FAIL_TO_PASS", []))
-        pass_to_pass = list(instance.get("PASS_TO_PASS", []))
-        problem_statement = str(instance.get("problem_statement", "")).strip()
-        hints_text = str(instance.get("hints_text", "")).strip()
-        relevant_fail_to_pass = self._select_relevant_tests(
-            fail_to_pass,
-            problem_statement,
-            hints_text,
-        )
-        relevant_pass_to_pass = self._select_relevant_tests(
-            pass_to_pass,
-            problem_statement,
-            hints_text,
-        )
-        candidate_test_files = self._extract_diff_paths(str(instance.get("test_patch", "")))
-        candidate_commit_urls = list(instance.get("commit_urls", []))[:5]
-        sections = [
-            "You are fixing a native SWE-bench benchmark task.",
-            "Return only a valid unified diff patch.",
-            "Make the smallest plausible fix for the described bug.",
-            "Do not invent files, symbols, or APIs not supported by the issue description.",
-            "Prefer modifying existing logic that matches the hint text over creating new abstractions.",
-            "If you touch tests, keep changes minimal and aligned with the described regression.",
-            f"Scenario ID: {scenario.scenario_id}",
-            f"Title: {scenario.title}",
-            f"Repository: {instance.get('repo', '')}",
-            f"Base commit: {instance.get('base_commit', '')}",
-            f"Problem statement:\n{problem_statement}",
-        ]
-        if hints_text:
-            sections.append(f"High-signal hints:\n{self._compress_text(hints_text, max_lines=20)}")
-        if scenario.notes:
-            sections.append(f"Scenario notes:\n{scenario.notes}")
-        if candidate_test_files:
-            sections.extend(
-                [
-                    "Regression test files referenced by the instance:",
-                    *[f"- {path}" for path in candidate_test_files[:10]],
-                ]
-            )
-        if candidate_commit_urls:
-            sections.extend(
-                [
-                    "Related upstream commit URLs mentioned by the instance:",
-                    *[f"- {url}" for url in candidate_commit_urls],
-                ]
-            )
-        if relevant_fail_to_pass:
-            sections.extend(
-                [
-                    "Most relevant fail-to-pass tests:",
-                    *[f"- {test_name}" for test_name in relevant_fail_to_pass[:40]],
-                ]
-            )
-        elif fail_to_pass:
-            sections.extend(
-                [
-                    "Representative fail-to-pass tests:",
-                    *[f"- {test_name}" for test_name in fail_to_pass[:20]],
-                ]
-            )
-        if relevant_pass_to_pass:
-            sections.extend(
-                [
-                    "Most relevant pass-to-pass tests to avoid regressing:",
-                    *[f"- {test_name}" for test_name in relevant_pass_to_pass[:40]],
-                ]
-            )
-        rebuild_cmds = list(instance.get("rebuild_cmds", []))
-        test_cmds = list(instance.get("test_cmds", []))
-        print_cmds = list(instance.get("print_cmds", []))
-        if rebuild_cmds:
-            sections.extend(["Rebuild commands:", *[f"- {command}" for command in rebuild_cmds]])
-        if test_cmds:
-            sections.extend(["Test commands:", *[f"- {command}" for command in test_cmds]])
-        if print_cmds:
-            sections.extend(["Print commands:", *[f"- {command}" for command in print_cmds]])
-        sections.append(
-            "Do not include explanations, markdown fences, or prose. "
-            "Do not repeat the issue text. Output only the unified diff patch."
-        )
-        return "\n".join(sections)
-
     @staticmethod
     def _build_patch_repair_prompt(
         *,
@@ -234,48 +140,6 @@ class OpenAICodePatchAgent:
                 invalid_patch,
             ]
         )
-
-    @staticmethod
-    def _compress_text(text: str, max_lines: int) -> str:
-        lines = [line.rstrip() for line in text.splitlines() if line.strip()]
-        if len(lines) <= max_lines:
-            return "\n".join(lines)
-        return "\n".join(lines[:max_lines])
-
-    @staticmethod
-    def _extract_diff_paths(diff_text: str) -> list[str]:
-        paths: list[str] = []
-        for line in diff_text.splitlines():
-            if not line.startswith("diff --git "):
-                continue
-            parts = line.split()
-            if len(parts) >= 4:
-                raw_path = parts[2]
-                normalized = raw_path[2:] if raw_path.startswith("a/") else raw_path
-                if normalized not in paths:
-                    paths.append(normalized)
-        return paths
-
-    @staticmethod
-    def _select_relevant_tests(
-        tests: list[str],
-        problem_statement: str,
-        hints_text: str,
-    ) -> list[str]:
-        corpus = f"{problem_statement}\n{hints_text}".lower()
-        keywords = {
-            token
-            for token in re.findall(r"[a-zA-Z_]{4,}", corpus)
-            if token not in {"given", "when", "with", "this", "that", "from", "into", "they", "them"}
-        }
-        prioritized = [
-            test_name
-            for test_name in tests
-            if any(keyword in test_name.lower() for keyword in keywords)
-        ]
-        if prioritized:
-            return prioritized
-        return tests
 
     @staticmethod
     def _validate_unified_diff(patch_text: str) -> str:
@@ -388,11 +252,6 @@ class OpenAICodePatchAgent:
                 continue
 
         return "\n".join(normalized).strip()
-
-    @staticmethod
-    def _load_native_instance(instance_path: str | Path) -> dict[str, Any]:
-        resolved = resolve_repo_path(instance_path)
-        return json.loads(resolved.read_text(encoding="utf-8"))
 
     @staticmethod
     def _discover_default_targets(repo_root: Path) -> list[str]:

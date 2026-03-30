@@ -23,7 +23,7 @@ class OpsRuntimeTests(unittest.TestCase):
             details={"nested": {"status": SubmissionStatus.CORRECT}},
         )
 
-        payload = outcome.to_executor_payload("aiopslab")
+        payload = outcome.to_executor_payload("acbench-local-ops")
 
         self.assertEqual(payload["metrics"]["status"], "Correct")
         self.assertEqual(payload["details"]["nested"]["status"], "Correct")
@@ -39,7 +39,7 @@ class OpsRuntimeTests(unittest.TestCase):
                     "service": "product-catalog",
                 },
                 "ops_fault": {
-                    "source": "aiopslab",
+                    "source": "acbench",
                     "problem_id": "p-1",
                     "description": "synthetic fault",
                 },
@@ -54,7 +54,7 @@ class OpsRuntimeTests(unittest.TestCase):
         problem = NativeOpsProblem.from_scenario(scenario)
 
         self.assertEqual(problem.problem_id, "p-1")
-        self.assertEqual(problem.source, "aiopslab")
+        self.assertEqual(problem.source, "acbench")
         self.assertEqual(problem.application, "astronomy-shop")
         self.assertTrue(problem.require_detection)
         self.assertTrue(problem.require_localization)

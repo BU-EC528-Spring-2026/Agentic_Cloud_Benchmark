@@ -1,120 +1,62 @@
 # Architecture
 
-ACBench has four main layers.
+## High-Level Flow
 
-## 1. Entry Layer
+The execution path is:
 
-Top-level files in the repository root:
+1. `cli.py` parses command-line inputs.
+2. `validate.py` loads and normalizes the scenario.
+3. `runner.py` selects the correct standalone executor.
+4. The executor runs code and/or ops work.
+5. Result artifacts are written under `runs/`.
 
-- `cli.py`: command-line entry point
-- `runner.py`: top-level orchestration
-- `validate.py`: scenario and backend validation
-- `doctor.py`: environment inspection
-- `evaluate.py`: batch evaluation
-- `report.py`: report generation
-- `export.py`: export utilities
+## Main Code Areas
 
-## 2. Execution Layer
+- [`cli.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/cli.py): command-line interface
+- [`runner.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runner.py): top-level orchestration
+- [`validate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/validate.py): scenario validation and readiness checks
+- [`doctor.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/doctor.py): environment inspection
+- [`evaluate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/evaluate.py): manifest evaluation helpers
+- [`report.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/report.py): markdown reporting
 
-Directories:
+## Scenario And Service Assets
 
-- `executors/`
-- `adapters/`
+- [`standalone/scenarios/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios): benchmark definitions
+- [`standalone/services/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/services): service-level docs and metadata
+- [`fixtures/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/fixtures): local fixture repositories and assets
+- [`patches/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/patches): reference patches
 
-### Executors
+## Execution Layers
 
-Executors are used when ACBench itself performs the work.
+- [`executors/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/executors): concrete execution paths
+- [`backends/code/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/backends/code): code backend helpers
+- [`backends/ops/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/backends/ops): ops backend helpers
+- [`agents/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/agents): patch or action generators
+- [`models/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/models): shared scenario/result/runtime models
 
-Examples:
+## Current Benchmark Shape
 
-- `executors/local_code.py`
-- `executors/local_ops.py`
-- `executors/standalone_code.py`
+Current scenario inventory:
 
-### Adapters
+- `3` code scenarios
+- `0` ops-only scenarios
+- `1` combined scenario
 
-Adapters are used when ACBench bridges into upstream systems.
+Current service families:
 
-Examples:
+- `samplepkg`
+- `astronomy_shop`
 
-- `adapters/aiopslab.py`
-- `adapters/swebench.py`
+## Result Artifacts
 
-## 3. Internal Backend Layer
+Each run directory typically includes:
 
-Directory:
+- `result.json`
+- `summary.json`
+- `diagnostics.json`
 
-- `backends/`
+Code runs may also include:
 
-This is the internal runtime / engine / runner layer used by the execution paths.
-
-### Code backend
-
-- `backends/code/runtime.py`
-- `backends/code/engine.py`
-- `backends/code/runner.py`
-- `backends/code/standalone.py`
-- `backends/code/native_upstream.py`
-
-### Ops backend
-
-- `backends/ops/runtime.py`
-- `backends/ops/engine.py`
-- `backends/ops/runner.py`
-- `backends/ops/native_upstream.py`
-
-## 4. Asset Layer
-
-Directories:
-
-- `scenarios/`: benchmark task definitions
-- `fixtures/`: local benchmark assets
-- `patches/`: reference patches
-- `predictions/`: evaluation inputs
-- `manifests/`: suite definitions
-
-## Agents
-
-Directory:
-
-- `agents/`
-
-Important examples:
-
-- `agents/openai_code.py`
-- `agents/openai_ops.py`
-
-These provide the OpenAI-backed prototype paths.
-
-## Typical Flow
-
-For a standalone local code run:
-
-1. `cli.py` parses the command.
-2. `runner.py` loads the scenario.
-3. `validate.py` checks the scenario.
-4. `executors/local_code.py` runs the task.
-5. `agents/openai_code.py` generates a patch if configured.
-6. result artifacts are written under `runs/`.
-
-For a live ops bridge run:
-
-1. `cli.py` parses the command.
-2. `runner.py` loads the scenario.
-3. `adapters/aiopslab.py` bridges into AIOpsLab.
-4. `agents/openai_ops.py` produces the action.
-5. ACBench normalizes the final result and artifacts under `runs/`.
-
-## Cleanup
-
-Generated artifacts can be cleaned with:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\cleanup_generated.ps1
-```
-
-## Related Documents
-
-- [README](../README.md)
-- [Quickstart](QUICKSTART.md)
-- [Scenario Authoring](SCENARIO_AUTHORING.md)
+- `openai_generated_patch.diff`
+- `build.log`
+- `test.log`

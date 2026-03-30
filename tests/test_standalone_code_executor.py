@@ -36,9 +36,10 @@ class StandaloneCodeExecutorTests(unittest.TestCase):
     def test_executor_can_use_agent_generated_patch(self) -> None:
         scenario = ScenarioSpec.from_file(
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "code_only_local_repo_buggy.json"
+            / "code"
+            / "samplepkg__local_repo_buggy.scenario.json"
         )
         executor = StandaloneCodeExecutor()
 

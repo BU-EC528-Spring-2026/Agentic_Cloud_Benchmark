@@ -1,79 +1,78 @@
 # Commands
 
-All commands below assume you are running from the repository root and have already activated your Python environment.
+All commands assume:
 
-## Environment Checks
+- you are in `C:\Projects\ACBench\Agentic_Cloud_Benchmark`
+- the virtual environment is activated
 
-Run the environment doctor:
+## Environment
 
-```bash
+```powershell
 python -m acbench.cli --doctor
-```
-
-Write a readiness report:
-
-```bash
 python -m acbench.cli --write-readiness-report runs/readiness_report.json
 ```
 
-Validate a scenario:
+## Scenario Validation
 
-```bash
-python -m acbench.cli --validate-scenario scenarios/examples/code_only_local_repo_buggy.json
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --check-readiness
 ```
 
-## Standalone Local Prototype
+## Single-Scenario Execution
 
-Run the local demo suite:
+Code-only with a patch:
 
-```bash
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+```
+
+Combined with a patch:
+
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/combined/samplepkg__local_fixture.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+```
+
+Code-only with an OpenAI agent:
+
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+```
+
+Dry run:
+
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --dry-run
+```
+
+## Batch Evaluation
+
+```powershell
+python -m acbench.cli --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
+```
+
+## Export
+
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --export-code-instance out/code_only_local_repo_buggy.instance.json
+```
+
+## Reports
+
+From an evaluation JSON:
+
+```powershell
+python -m acbench.cli --evaluation-json runs/local_suite_eval.json --write-markdown-report runs/local_suite_eval.md
+```
+
+From one run directory:
+
+```powershell
+python -m acbench.cli --run-dir runs/code_only_local_repo_buggy-YYYYMMDD-HHMMSS-XXXXXX --write-run-markdown-report runs/code_only_local_repo_buggy_report.md
+```
+
+## Demo
+
+```powershell
 python -m acbench.cli --run-local-demo demo_out
-```
-
-Run the OpenAI-backed local code benchmark:
-
-```bash
-python -m acbench.cli --scenario scenarios/examples/code_only_local_repo_buggy.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
-```
-
-Run the local combined fixture with a reference patch:
-
-```bash
-python -m acbench.cli --scenario scenarios/examples/combined_local_fixture.json --code-patch patches/local_repo_buggy_fix.diff
-```
-
-## Optional Upstream Bridge Commands
-
-Run the AIOpsLab live ops prototype:
-
-```bash
-python -m acbench.cli --scenario scenarios/examples/ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --max-steps 1
-```
-
-Run a native SWE-bench candidate scenario:
-
-```bash
-python -m acbench.cli --scenario scenarios/hf_candidates/casey__just-2835.scenario.json
-```
-
-## Evaluation and Reporting
-
-Run batch evaluation:
-
-```bash
-python -m acbench.cli --evaluate-manifest manifests/local_suite.json --predictions predictions/local_gold.json --output runs/local_suite_eval.json
-```
-
-Generate a markdown report from an evaluation output:
-
-```bash
-python -m acbench.cli --report-json runs/local_suite_eval.json --report-md runs/local_suite_report.md
-```
-
-## Export Utilities
-
-Export a scenario as a SWE-bench-style instance:
-
-```bash
-python -m acbench.cli --export-swebench-instance scenarios/examples/code_only_local_repo_buggy.json --output out/code_only_local_repo_buggy.instance.json
 ```

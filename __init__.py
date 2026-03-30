@@ -1,4 +1,4 @@
-"""ACBench prototype package."""
+"""ACBench standalone-first benchmark package."""
 
 from acbench.runner import ACBenchRunner
 

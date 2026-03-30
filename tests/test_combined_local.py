@@ -22,9 +22,10 @@ class CombinedLocalTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "combined_local_fixture.json"
+            / "combined"
+            / "samplepkg__local_fixture.scenario.json"
         )
         patch_path = (
             Path(__file__).resolve().parents[1]

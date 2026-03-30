@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 class SubmitOnlyAIOpsAgent:
-    """Minimal AIOpsLab-compatible agent that always submits immediately."""
+    """Minimal standalone ops agent that always submits immediately."""
 
     def init_context(self, problem_desc: str, instructions: str, apis: dict) -> None:
         self.problem_desc = problem_desc
@@ -28,7 +28,7 @@ class DetectionYesAIOpsAgent:
 
 
 class ReplayAIOpsAgent:
-    """AIOpsLab-compatible agent that replays a fixed list of actions."""
+    """Standalone ops agent that replays a fixed list of actions."""
 
     def __init__(self, actions: list[str] | None = None):
         self.actions = list(actions or ["```\nsubmit()\n```"])

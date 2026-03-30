@@ -21,7 +21,7 @@ class OpsRunnerTests(unittest.TestCase):
             request = build_ops_request(
                 NativeOpsProblem(
                     problem_id="p-1",
-                    source="aiopslab",
+                    source="acbench",
                     application="app",
                     service="svc",
                 ),
@@ -29,20 +29,7 @@ class OpsRunnerTests(unittest.TestCase):
                 max_steps=1,
                 agent_ref="agent:Class",
             )
-            outcome = write_ops_artifacts(
-                request,
-                run_ops_request(
-                    build_ops_request(
-                        NativeOpsProblem(
-                            problem_id="p-1",
-                            source="acbench",
-                            application="app",
-                            service="svc",
-                        ),
-                        output_dir=Path(tmp_dir),
-                    )
-                ),
-            )
+            outcome = write_ops_artifacts(request, run_ops_request(request))
             outcome.metrics["status"] = SubmissionStatus.INCORRECT
             outcome = write_ops_artifacts(request, outcome)
 

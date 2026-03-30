@@ -1,4 +1,4 @@
-"""Top-level runner for the ACBench prototype."""
+"""Top-level runner for the standalone ACBench benchmark."""
 
 from __future__ import annotations
 
@@ -7,16 +7,9 @@ import json
 from pathlib import Path
 import traceback
 
-from acbench.adapters.aiopslab import AIOpsLabExecutor
-from acbench.adapters.swebench import SWEBenchCodeExecutor
-from acbench.backends.ops.native_upstream import (
-    has_problem_id as aiopslab_has_problem_id,
-    inspect_native_environment as inspect_aiopslab_native_environment,
-)
 from acbench.executors.dry_run import DryRunCodeExecutor, DryRunOpsExecutor
 from acbench.executors.local_code import LocalCodeExecutor
 from acbench.executors.local_ops import LocalOpsExecutor
-from acbench.executors.standalone_code import StandaloneCodeExecutor
 from acbench.models.result import BenchmarkResult, ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
@@ -47,31 +40,21 @@ class ACBenchRunner:
     def select_ops_executor(self, dry_run: bool):
         """Select the ops executor implementation."""
 
-        return DryRunOpsExecutor() if dry_run else AIOpsLabExecutor()
+        return DryRunOpsExecutor() if dry_run else LocalOpsExecutor()
 
     def select_ops_executor_for_scenario(self, scenario: ScenarioSpec, dry_run: bool):
         """Select the ops executor for one scenario."""
 
         if dry_run:
             return DryRunOpsExecutor()
-        if scenario.ops_fault and scenario.ops_fault.source == "acbench":
-            return LocalOpsExecutor()
-        return AIOpsLabExecutor()
+        return LocalOpsExecutor()
 
     def select_code_executor(self, scenario: ScenarioSpec, dry_run: bool):
         """Select the code executor implementation."""
 
         if dry_run:
             return DryRunCodeExecutor()
-        if scenario.code_fault and scenario.code_fault.source == "acbench":
-            return LocalCodeExecutor()
-        if (
-            scenario.code_fault
-            and scenario.code_fault.source == "swe-bench-live"
-            and not scenario.code_fault.instance_path
-        ):
-            return StandaloneCodeExecutor()
-        return SWEBenchCodeExecutor()
+        return LocalCodeExecutor()
 
     def run(
         self,
@@ -162,12 +145,7 @@ class ACBenchRunner:
     def _validate_backend_bindings(self, scenario: ScenarioSpec) -> None:
         """Validate scenario references against known backend metadata."""
 
-        if scenario.ops_fault and scenario.ops_fault.source == "aiopslab":
-            if not aiopslab_has_problem_id(scenario.ops_fault.problem_id):
-                raise ValueError(
-                    "Scenario references an unknown AIOpsLab problem_id: "
-                    f"{scenario.ops_fault.problem_id}"
-                )
+        return None
 
     def _merge_metrics(self, result: BenchmarkResult) -> dict:
         """Merge executor metrics into one top-level summary."""
@@ -218,45 +196,16 @@ class ACBenchRunner:
             "code_backend": None,
         }
         if scenario.mode in {"ops_only", "combined"} and scenario.ops_fault:
-            if scenario.ops_fault.source == "aiopslab":
-                preflight = inspect_aiopslab_native_environment()
-                diagnostics["ops_backend"] = {
-                    "source": "aiopslab",
-                    "repo_root": preflight.repo_root,
-                    "registry_path": preflight.registry_path,
-                    "problem_count": preflight.problem_count,
-                    "import_ready": preflight.import_ready,
-                    "missing_dependency": preflight.missing_dependency,
-                }
+            diagnostics["ops_backend"] = {
+                "source": scenario.ops_fault.source,
+                "executor": "acbench-local-ops",
+            }
         if scenario.mode in {"code_only", "combined"} and scenario.code_fault:
-            if scenario.code_fault.source == "swe-bench-live":
-                preflight = SWEBenchCodeExecutor.preflight_for_scenario(scenario)
-                diagnostics["code_backend"] = {
-                    "source": scenario.code_fault.source,
-                    "executor": (
-                        "swe-bench-live-native"
-                        if preflight.backend_type == "upstream-native"
-                        else "acbench-code-standalone"
-                    ),
-                    "backend_type": preflight.backend_type,
-                    "repo_root": preflight.repo_root,
-                    "launch_root": preflight.launch_root,
-                    "evaluation_root": preflight.evaluation_root,
-                    "import_ready": preflight.import_ready,
-                    "missing_dependency": preflight.missing_dependency,
-                }
-                if scenario.code_fault.instance_path:
-                    diagnostics["code_backend"]["native_instance"] = (
-                        SWEBenchCodeExecutor.inspect_native_instance_file(
-                            scenario.code_fault.instance_path
-                        )
-                    )
-            else:
-                diagnostics["code_backend"] = {
-                    "source": scenario.code_fault.source,
-                    "repository_path": scenario.service.repository_path or "",
-                    "executor": "acbench-local-code",
-                }
+            diagnostics["code_backend"] = {
+                "source": scenario.code_fault.source,
+                "repository_path": scenario.service.repository_path or "",
+                "executor": "acbench-local-code",
+            }
         return diagnostics
 
     @staticmethod

@@ -16,7 +16,7 @@ from acbench.paths import resolve_repo_path
 
 
 class StandaloneCodeExecutor(BenchmarkExecutor):
-    """Execute repository-backed swe-style code tasks without upstream runtime imports."""
+    """Execute repository-backed standalone code tasks."""
 
     def __init__(self) -> None:
         super().__init__(backend_name="acbench-code-standalone")
@@ -34,9 +34,9 @@ class StandaloneCodeExecutor(BenchmarkExecutor):
             run_config,
             patch_override=agent_artifacts.get("patch_text", ""),
         )
-        instance_path = run_dir / "swebench_instance.json"
+        instance_path = run_dir / "code_instance.json"
         instance_path.write_text(json.dumps(instance, indent=2), encoding="utf-8")
-        prediction_path = run_dir / "swebench_prediction.json"
+        prediction_path = run_dir / "code_prediction.json"
         prediction_path.write_text(
             json.dumps(self._build_prediction_payload(instance), indent=2),
             encoding="utf-8",
@@ -45,7 +45,7 @@ class StandaloneCodeExecutor(BenchmarkExecutor):
         outcome = run_local_code_request(
             CodeRunRequest(
                 instance=NativeCodeInstance.from_payload(instance),
-                output_dir=run_dir / "swebench_eval",
+                output_dir=run_dir / "code_eval",
                 keep_workspace=run_config.keep_artifacts,
             )
         )

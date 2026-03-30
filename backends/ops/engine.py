@@ -1,12 +1,10 @@
-"""Execution adapters for the internal ACBench ops runtime."""
+"""Execution adapters for the internal standalone ACBench ops runtime."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 
-from acbench.backends.ops.native_upstream import resolve_native_repo_root
 from acbench.backends.ops.runtime import NativeOpsProblem, OpsRunOutcome, OpsRunRequest
 
 
@@ -46,30 +44,13 @@ class StandaloneLocalOpsEngine:
         )
 
 
-@dataclass(slots=True)
-class UpstreamAIOpsLabEngine:
-    """Temporary bridge marker for the current native AIOpsLab live path."""
-
-    repo_root: Path
-
-    def run(self, request: OpsRunRequest) -> OpsRunOutcome:
-        """Placeholder for future engine-level AIOpsLab bridge execution."""
-
-        raise NotImplementedError(
-            "UpstreamAIOpsLabEngine is a structural placeholder. "
-            "Live AIOpsLab execution still runs through AIOpsLabExecutor."
-        )
-
-
 def build_default_engine() -> OpsRuntimeEngine:
-    """Build the current default ops runtime engine."""
+    """Build the default standalone ops runtime engine."""
 
-    return UpstreamAIOpsLabEngine(repo_root=resolve_native_repo_root())
+    return StandaloneLocalOpsEngine()
 
 
 def build_engine_for_problem(problem: NativeOpsProblem) -> OpsRuntimeEngine:
     """Build the most appropriate current engine for one ops problem."""
 
-    if problem.source == "acbench":
-        return StandaloneLocalOpsEngine()
     return build_default_engine()

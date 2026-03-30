@@ -1,93 +1,70 @@
 # Scenario Authoring
 
-Scenarios define benchmark tasks. They live under `scenarios/`.
+All supported benchmark scenarios now live under [`standalone/scenarios/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios).
 
-## Where To Start
+Current subdirectories:
 
-The easiest way to learn the format is to read the example scenarios:
+- [`standalone/scenarios/code/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code)
+- [`standalone/scenarios/combined/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/combined)
 
-- `scenarios/examples/code_only_local_repo_buggy.json`
-- `scenarios/examples/combined_local_fixture.json`
-- `scenarios/examples/ops_only_astronomy_shop.json`
+There are currently no standalone ops-only scenarios in the repo.
 
-## Scenario Categories
+## Start From Existing Files
 
-### Local examples
+Reference code scenarios:
 
-Directory:
+- [`samplepkg__local_repo_buggy.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json)
+- [`samplepkg__smoke_local.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/samplepkg__smoke_local.scenario.json)
+- [`astronomy_shop__product_catalog_seed_defect.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/astronomy_shop__product_catalog_seed_defect.scenario.json)
 
-- `scenarios/examples/`
+Reference combined scenario:
 
-Use these for:
+- [`samplepkg__local_fixture.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/combined/samplepkg__local_fixture.scenario.json)
 
-- learning the format
-- local standalone prototype runs
-- creating new local tasks
+## Typical Code Scenario Fields
 
-### Native SWE-bench candidates
+Important fields:
 
-Directory:
+- `scenario_id`
+- `title`
+- `mode`
+- `service`
+- `code_fault`
+- `build.rebuild_cmds`
+- `build.test_cmds`
+- `success_criteria`
+- `metrics`
+- `gold_patch_path`
 
-- `scenarios/hf_candidates/`
+Code scenarios generally point at a local repository through:
 
-Use these for:
+- `service.repository_path`
 
-- native SWE-bench benchmark tasks
-- optional upstream bridge workflows
+## Typical Combined Scenario Fields
 
-## Typical Local Code Scenario Inputs
+Combined scenarios include all major code fields plus:
 
-A local code scenario usually specifies:
+- `ops_fault`
+- ops-related success criteria such as detection, localization, and repair
 
-- repository path
-- build commands
-- test commands
-- success criteria
-- code fault metadata
+## Authoring Rules
 
-The local buggy repository example uses:
-
-- `fixtures/local_repo_buggy`
-
-## Typical Ops Scenario Inputs
-
-An ops scenario usually specifies:
-
-- service or problem metadata
-- backend selection
-- ops fault metadata
-- evaluation mode
-
-The live astronomy-shop example uses:
-
-- `scenarios/examples/ops_only_astronomy_shop.json`
+- Put new code-only tasks under `standalone/scenarios/code/`.
+- Put new combined tasks under `standalone/scenarios/combined/`.
+- Keep scenario filenames stable and descriptive.
+- Prefer one service family per scenario.
+- Keep build and test commands directly runnable from the copied workspace.
 
 ## Validation
 
-Validate a scenario with:
+Validate every new scenario before running it:
 
-```bash
-python -m acbench.cli --validate-scenario scenarios/examples/code_only_local_repo_buggy.json
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
 ```
 
-## Export
+Check whether the environment is ready:
 
-You can export a scenario into a SWE-bench-style instance with:
-
-```bash
-python -m acbench.cli --export-swebench-instance scenarios/examples/code_only_local_repo_buggy.json --output out/code_only_local_repo_buggy.instance.json
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --check-readiness
 ```
-
-## Recommended Workflow
-
-1. Copy an existing example from `scenarios/examples/`.
-2. Edit the fields you need.
-3. Validate the scenario.
-4. Run it locally.
-5. Add tests if you are changing scenario-loading behavior.
-
-## Related Documents
-
-- [README](../README.md)
-- [Quickstart](QUICKSTART.md)
-- [Commands](COMMANDS.md)

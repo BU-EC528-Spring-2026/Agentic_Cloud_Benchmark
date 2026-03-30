@@ -44,13 +44,14 @@ class RunnerTests(unittest.TestCase):
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_dry_run_ops_scenario_writes_result(self) -> None:
+    def test_dry_run_combined_scenario_writes_result(self) -> None:
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "ops_only_astronomy_shop.json"
+            / "combined"
+            / "samplepkg__local_fixture.scenario.json"
         )
 
         result = runner.run(scenario_path, dry_run=True)
@@ -65,9 +66,10 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "ops_only_astronomy_shop.json"
+            / "combined"
+            / "samplepkg__local_fixture.scenario.json"
         )
 
         class FakeIssue:
@@ -93,9 +95,10 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "code_only_local_repo_buggy.json"
+            / "code"
+            / "samplepkg__local_repo_buggy.scenario.json"
         )
 
         class FailingExecutor(BenchmarkExecutor):
@@ -131,9 +134,10 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "code_only_local_repo_buggy.json"
+            / "code"
+            / "samplepkg__local_repo_buggy.scenario.json"
         )
 
         result = runner.run(
@@ -153,92 +157,14 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("\"submitted_instance_id\"", summary)
         self.assertIn("\"resolved\"", summary)
 
-    def test_repo_backed_swe_style_diagnostics_use_standalone_executor_name(self) -> None:
-        runner = ACBenchRunner(root_dir=self.temp_dir)
-        repo_dir = self.temp_dir / "mini-repo"
-        repo_dir.mkdir(parents=True, exist_ok=True)
-        (repo_dir / "placeholder.txt").write_text("ok\n", encoding="utf-8")
-        scenario_path = self.temp_dir / "repo_backed_swe_style.json"
-        scenario_path.write_text(
-            json.dumps(
-                {
-                    "scenario_id": "repo-backed-swe-style",
-                    "title": "repo backed",
-                    "mode": "code_only",
-                    "service": {
-                        "application": "app",
-                        "service": "svc",
-                        "repository_path": str(repo_dir),
-                    },
-                    "code_fault": {
-                        "source": "swe-bench-live",
-                        "defect_id": "d1",
-                    },
-                    "build": {
-                        "test_cmds": ["echo ok"],
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
-
-        result = runner.run(
-            scenario_path,
-            dry_run=False,
-            run_config=RunConfig(dry_run=False),
-        )
-
-        diagnostics = json.loads(
-            Path(result.artifacts.diagnostics_path).read_text(encoding="utf-8")
-        )
-        self.assertEqual(
-            diagnostics["code_backend"]["executor"],
-            "acbench-code-standalone",
-        )
-
-    def test_select_code_executor_uses_standalone_executor_for_repo_backed_swe_style(self) -> None:
-        runner = ACBenchRunner(root_dir=self.temp_dir)
-        scenario = ScenarioSpec.from_dict(
-            {
-                "scenario_id": "repo-backed-swe-style",
-                "title": "repo backed",
-                "mode": "code_only",
-                "service": {
-                    "application": "app",
-                    "service": "svc",
-                    "repository_path": str(self.temp_dir),
-                },
-                "code_fault": {
-                    "source": "swe-bench-live",
-                    "defect_id": "d1",
-                },
-                "build": {
-                    "test_cmds": ["echo ok"],
-                },
-            }
-        )
-
-        executor = runner.select_code_executor(scenario, dry_run=False)
-
-        self.assertIsInstance(executor, StandaloneCodeExecutor)
-
-    def test_astronomy_examples_no_longer_depend_on_sibling_repo_paths(self) -> None:
-        examples_dir = Path(__file__).resolve().parents[1] / "scenarios" / "examples"
-        for scenario_name in (
-            "code_only_astronomy_shop.json",
-            "combined_astronomy_shop.json",
-        ):
-            payload = json.loads((examples_dir / scenario_name).read_text(encoding="utf-8"))
-            repository_path = payload["service"]["repository_path"]
-            self.assertNotIn("AIOpsLab/aiopslab-applications", repository_path)
-
     def test_local_combined_promotes_ops_trace_artifacts(self) -> None:
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "combined_local_fixture.json"
+            / "combined"
+            / "samplepkg__local_fixture.scenario.json"
         )
         patch_path = (
             Path(__file__).resolve().parents[1]
@@ -263,9 +189,10 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
+            / "standalone"
             / "scenarios"
-            / "examples"
-            / "code_only_local_repo_buggy.json"
+            / "code"
+            / "samplepkg__local_repo_buggy.scenario.json"
         )
 
         executor = runner.select_code_executor(

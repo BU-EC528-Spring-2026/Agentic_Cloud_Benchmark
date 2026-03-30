@@ -124,13 +124,18 @@ class ScenarioSpec:
         if self.mode in {"code_only", "combined"} and self.code_fault is None:
             raise ValueError("code_fault is required for code_only and combined scenarios")
 
-        if self.mode in {"code_only", "combined"}:
-            native_swebench_instance = (
-                self.code_fault is not None
-                and self.code_fault.source == "swe-bench-live"
-                and bool(self.code_fault.instance_path)
-            )
-            if not native_swebench_instance and not self.build.rebuild_cmds and not self.build.test_cmds:
+        if self.mode in {"ops_only", "combined"} and self.ops_fault is not None:
+            if self.ops_fault.source != "acbench":
+                raise ValueError(
+                    "Standalone ACBench only supports ops_fault.source == 'acbench'"
+                )
+
+        if self.mode in {"code_only", "combined"} and self.code_fault is not None:
+            if self.code_fault.source != "acbench":
+                raise ValueError(
+                    "Standalone ACBench only supports code_fault.source == 'acbench'"
+                )
+            if not self.build.rebuild_cmds and not self.build.test_cmds:
                 raise ValueError(
                     "code_only and combined scenarios require rebuild_cmds or test_cmds"
                 )

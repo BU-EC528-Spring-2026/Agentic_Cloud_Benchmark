@@ -1,101 +1,79 @@
 # Quickstart
 
-This document is a shorter companion to the main [README](../README.md). Use the README if you are setting up the repository from scratch on a new machine.
+This guide is for someone who has never used the repo before.
 
-## Fastest Successful Path
+## Goal
 
-From the repository root:
+By the end of this guide you will be able to:
 
-1. Create and activate a Python 3.11 virtual environment.
-2. Install dependencies.
-3. Install the repository as an editable package.
-4. Run `--doctor`.
-5. Run the standalone local code prototype.
+- install the repo
+- validate a scenario
+- run the local demo suite
+- inspect the generated result files
 
 ## Setup
 
-Linux / macOS:
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -e .
-```
-
-PowerShell:
+From the repository root:
 
 ```powershell
 py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-Verify:
+Check that the CLI is available:
 
-```bash
+```powershell
 python -m acbench.cli --doctor
 ```
 
-## First Recommended Command
+## First Safe Command
 
-Run the standalone local code prototype:
+Validate a scenario without running it:
 
-```bash
-python -m acbench.cli --scenario scenarios/examples/code_only_local_repo_buggy.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
 ```
 
-Set `OPENAI_API_KEY` before running the command.
+## First Real Run
 
-## Local Demo Suite
+Run the built-in local evaluation bundle:
 
-```bash
-python -m acbench.cli --run-local-demo demo_out
+```powershell
+python -m acbench.cli --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
-This is a safe local check that does not require `AIOpsLab` or `SWE-bench-Live`.
+Expected behavior:
 
-## Live Ops Prototype
+- the command writes a batch result JSON
+- two run directories are created under `runs/`
+- each run directory includes `result.json` and `summary.json`
 
-This requires:
+## Run A Single Scenario
 
-- sibling `AIOpsLab/` checkout
-- Kubernetes
-- Helm
-- kubectl
+Code-only:
 
-Command:
-
-```bash
-python -m acbench.cli --scenario scenarios/examples/ops_only_astronomy_shop.json --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --max-steps 1
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-patch patches/local_repo_buggy_fix.diff
 ```
 
-## Most Useful Output Files
+Combined:
 
-After a run, inspect:
+```powershell
+python -m acbench.cli --scenario standalone/scenarios/combined/samplepkg__local_fixture.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+```
 
-- `runs/<timestamp>/result.json`
-- `runs/<timestamp>/summary.json`
-- `runs/<timestamp>/diagnostics.json`
+## Optional: Run With An OpenAI Agent
 
-For code runs, also inspect:
+```powershell
+$env:OPENAI_API_KEY="<your-key>"
+python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+```
 
-- `openai_generated_patch.diff`
-- `build.log`
-- `test.log`
+## Where To Look Next
 
-For live ops runs, also inspect:
-
-- `aiops_agent_prompt.txt`
-- `aiops_agent_response.txt`
-- `aiops_agent_action.txt`
-
-## Where To Read Next
-
-- [Commands](COMMANDS.md)
-- [Environment](ENVIRONMENT.md)
-- [Architecture](ARCHITECTURE.md)
-- [Scenario Authoring](SCENARIO_AUTHORING.md)
+- See [`COMMANDS.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/COMMANDS.md) for a compact command reference.
+- See [`SCENARIO_AUTHORING.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/SCENARIO_AUTHORING.md) if you want to add tasks.
+- See [`ARCHITECTURE.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/ARCHITECTURE.md) if you want the code structure.

@@ -9,7 +9,7 @@ from openai import OpenAI
 
 
 class OpenAIOpsAgent:
-    """Minimal AIOpsLab-compatible agent backed by an OpenAI-compatible API."""
+    """Minimal standalone ops agent backed by an OpenAI-compatible API."""
 
     def __init__(self) -> None:
         self.model = ""
