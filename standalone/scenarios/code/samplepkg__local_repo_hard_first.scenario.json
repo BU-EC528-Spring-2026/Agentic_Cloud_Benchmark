@@ -1,0 +1,41 @@
+{
+  "scenario_id": "code_only_hard_first",
+  "title": "Race condition in shared counter increment",
+  "mode": "code_only",
+  "service": {
+    "application": "acbench-local-fixture",
+    "service": "samplepkg",
+    "deployment": "local",
+    "repository_path": "fixtures/local_repo_hard_first"
+  },
+  "code_fault": {
+    "source": "acbench",
+    "defect_id": "local-repo-racecond-001",
+    "description": "The Counter.increment method performs a non-atomic read-modify-write on self.value without acquiring the lock, causing lost updates under concurrent access. The lock attribute exists but is never used. The benchmark is successful when a candidate patch restores the failing tests.",
+    "target_files": ["src/samplepkg/race.py"]
+  },
+  "build": {
+    "rebuild_cmds": ["python -m compileall src"],
+    "test_cmds": [
+      "$env:PYTHONPATH='src'; python -m unittest discover -s tests -p \"test_*.py\" -v"
+    ],
+    "print_cmds": [],
+    "log_parser": "none"
+  },
+  "success_criteria": {
+    "require_repair": true,
+    "require_build_success": true,
+    "require_test_success": true
+  },
+  "metrics": ["build_success", "test_success"],
+  "tags": [
+    "standalone",
+    "code",
+    "fixture",
+    "hard",
+    "concurrency",
+    "race-condition"
+  ],
+  "notes": "Hard difficulty. Use with --code-patch patches/local_repo_hard_first_fix.diff to validate the race condition repair path. The lock attribute is intentionally present but unused — the agent must recognize it and apply it correctly around the read-modify-write.",
+  "gold_patch_path": "patches/local_repo_hard_first_fix.diff"
+}

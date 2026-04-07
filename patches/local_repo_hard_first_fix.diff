@@ -1,0 +1,10 @@
+--- a/src/samplepkg/race.py
++++ b/src/samplepkg/race.py
+@@ -9,5 +9,6 @@
+     def increment(self):
+         """Increment the counter by one."""
+-        current = self.value
+-        self.value = current + 1
++        with self._lock:
++            current = self.value
++            self.value = current + 1
