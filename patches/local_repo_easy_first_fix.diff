@@ -1,0 +1,10 @@
+--- a/src/samplepkg/range_sum.py
++++ b/src/samplepkg/range_sum.py
+@@ -5,6 +5,6 @@
+ def range_sum(n: int) -> int:
+     """Return the sum of integers from 1 to n inclusive."""
+     total = 0
+-    for i in range(n):
++    for i in range(1, n + 1):
+         total += i
+     return total
