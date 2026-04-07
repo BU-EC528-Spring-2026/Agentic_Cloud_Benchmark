@@ -1,0 +1,9 @@
+--- a/src/samplepkg/avg.py
++++ b/src/samplepkg/avg.py
+@@ -3,4 +3,6 @@
+ def avg(values: list) -> float:
+     """Return the mean of a list of numbers. Returns 0.0 for an empty list."""
+-    return sum(values) / len(values)
++    if not values:
++        return 0.0
++    return sum(values) / len(values)
