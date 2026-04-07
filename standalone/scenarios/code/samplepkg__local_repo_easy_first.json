@@ -1,0 +1,34 @@
+{
+  "scenario_id": "code_only_easy_first",
+  "title": "Off-by-one error in loop range",
+  "mode": "code_only",
+  "service": {
+    "application": "acbench-local-fixture",
+    "service": "samplepkg",
+    "deployment": "local",
+    "repository_path": "fixtures/local_repo_easy_first"
+  },
+  "code_fault": {
+    "source": "acbench",
+    "defect_id": "local-repo-offbyone-001",
+    "description": "The range_sum function uses range(n) instead of range(1, n+1), summing 0..n-1 instead of 1..n. The benchmark is successful when a candidate patch restores the failing tests.",
+    "target_files": ["src/samplepkg/range_sum.py"]
+  },
+  "build": {
+    "rebuild_cmds": ["python -m compileall src"],
+    "test_cmds": [
+      "$env:PYTHONPATH='src'; python -m unittest discover -s tests -p \"test_*.py\" -v"
+    ],
+    "print_cmds": [],
+    "log_parser": "none"
+  },
+  "success_criteria": {
+    "require_repair": true,
+    "require_build_success": true,
+    "require_test_success": true
+  },
+  "metrics": ["build_success", "test_success"],
+  "tags": ["standalone", "code", "fixture", "easy", "off-by-one"],
+  "notes": "Easy difficulty. Use with --code-patch patches/local_repo_easy_first_fix.diff to validate the off-by-one repair path.",
+  "gold_patch_path": "patches/local_repo_easy_first_fix.diff"
+}
