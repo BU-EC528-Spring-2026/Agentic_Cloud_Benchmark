@@ -107,6 +107,8 @@ class LocalOpsExecutorTests(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertFalse(result.metrics["synthetic"])
         self.assertEqual(result.details["mode"], "agent-driven-ops")
+        self.assertEqual(result.metrics["agent_answer_count"], 1)
+        self.assertIn("agent_telemetry", result.details)
 
 
 if __name__ == "__main__":

@@ -6,10 +6,12 @@ import os
 import json
 from pathlib import Path
 import re
+from time import perf_counter
 from typing import Any
 
 from openai import OpenAI
 
+from acbench.agents.telemetry import summarize_call_records, timed_call
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
 from acbench.paths import resolve_repo_path
@@ -38,13 +40,19 @@ class OpenAICodePatchAgent:
             api_key=api_key,
             base_url=run_config.openai_base_url or None,
         )
-        response = client.responses.create(
+        started = perf_counter()
+        call_records: list[dict[str, Any]] = []
+        response, call_record = timed_call(
+            "initial_answer",
+            client.responses.create,
             model=run_config.openai_model,
             input=prompt,
         )
+        call_records.append(call_record)
         raw_text = getattr(response, "output_text", "") or ""
         prompt_path = output_dir / "openai_prompt.txt"
         response_path = output_dir / "openai_response.txt"
+        telemetry_path = output_dir / "openai_code_telemetry.json"
         prompt_path.write_text(prompt, encoding="utf-8")
         response_path.write_text(raw_text, encoding="utf-8")
         patch_text = self._extract_patch(raw_text)
@@ -58,16 +66,24 @@ class OpenAICodePatchAgent:
                 invalid_patch=patch_text,
                 validation_error=validation_error,
             )
-            repair_response = client.responses.create(
+            repair_response, call_record = timed_call(
+                f"repair_answer_{len(call_records)}",
+                client.responses.create,
                 model=run_config.openai_model,
                 input=repair_prompt,
             )
+            call_records.append(call_record)
             repair_text = getattr(repair_response, "output_text", "") or ""
             raw_text = f"{raw_text}\n\n--- PATCH REPAIR ---\n{repair_text}"
             response_path.write_text(raw_text, encoding="utf-8")
             patch_text = self._extract_patch(repair_text)
             patch_text = self._normalize_unified_diff(patch_text)
             validation_error = self._validate_unified_diff(patch_text)
+        telemetry = summarize_call_records(
+            call_records,
+            wall_time_seconds=perf_counter() - started,
+        )
+        telemetry_path.write_text(json.dumps(telemetry, indent=2), encoding="utf-8")
         if validation_error:
             raise ValueError(f"Model returned an invalid unified diff after retries: {validation_error}")
 
@@ -78,6 +94,8 @@ class OpenAICodePatchAgent:
             "prompt_path": str(prompt_path),
             "response_path": str(response_path),
             "generated_patch_path": str(patch_path),
+            "telemetry": telemetry,
+            "telemetry_path": str(telemetry_path),
         }
 
     def _build_prompt(self, scenario: ScenarioSpec) -> str:

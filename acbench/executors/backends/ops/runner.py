@@ -81,6 +81,10 @@ def build_ops_request(
     openai_model: str = "",
     openai_api_key_env: str = "OPENAI_API_KEY",
     openai_base_url: str = "",
+    anthropic_model: str = "",
+    anthropic_api_key_env: str = "ANTHROPIC_API_KEY",
+    anthropic_base_url: str = "https://api.anthropic.com",
+    anthropic_version: str = "2023-06-01",
 ) -> OpsRunRequest:
     """Build one normalized ops run request."""
 
@@ -93,4 +97,8 @@ def build_ops_request(
         openai_model=openai_model,
         openai_api_key_env=openai_api_key_env,
         openai_base_url=openai_base_url,
+        anthropic_model=anthropic_model,
+        anthropic_api_key_env=anthropic_api_key_env,
+        anthropic_base_url=anthropic_base_url,
+        anthropic_version=anthropic_version,
     )

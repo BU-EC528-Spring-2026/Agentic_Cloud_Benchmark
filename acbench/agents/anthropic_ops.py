@@ -1,4 +1,4 @@
-"""OpenAI-backed ops agent integrations for ACBench."""
+"""Anthropic-backed ops agent integrations for ACBench."""
 
 from __future__ import annotations
 
@@ -9,22 +9,19 @@ import re
 from time import perf_counter
 from typing import Any
 
-try:
-    from openai import OpenAI
-except ImportError:  # pragma: no cover - exercised in environments without openai installed
-    OpenAI = None
-
+from acbench.agents.anthropic_common import anthropic_messages_create
 from acbench.agents.telemetry import summarize_call_records, timed_call
 from acbench.executors.backends.ops.runtime import NativeOpsProblem
 
 
-class OpenAIOpsAgent:
-    """Use an OpenAI-compatible model to produce structured ops assessments."""
+class AnthropicOpsAgent:
+    """Use Claude to produce structured ops assessments."""
 
     def __init__(self) -> None:
         self.model = ""
-        self.api_key_env = "OPENAI_API_KEY"
-        self.base_url = ""
+        self.api_key_env = "ANTHROPIC_API_KEY"
+        self.base_url = "https://api.anthropic.com"
+        self.version = "2023-06-01"
         self.last_prompt = ""
         self.last_response = ""
         self.last_assessment: dict[str, Any] = {}
@@ -33,21 +30,34 @@ class OpenAIOpsAgent:
         self,
         run_config=None,
         *,
-        model: str = "",
-        api_key_env: str = "OPENAI_API_KEY",
-        base_url: str = "",
+        anthropic_model: str = "",
+        anthropic_api_key_env: str = "ANTHROPIC_API_KEY",
+        anthropic_base_url: str = "https://api.anthropic.com",
+        anthropic_version: str = "2023-06-01",
         **_: Any,
     ) -> None:
-        """Load runtime configuration before the problem starts."""
-
         if run_config is not None:
-            model = getattr(run_config, "openai_model", model)
-            api_key_env = getattr(run_config, "openai_api_key_env", api_key_env)
-            base_url = getattr(run_config, "openai_base_url", base_url)
+            anthropic_model = getattr(run_config, "anthropic_model", anthropic_model)
+            anthropic_api_key_env = getattr(
+                run_config,
+                "anthropic_api_key_env",
+                anthropic_api_key_env,
+            )
+            anthropic_base_url = getattr(
+                run_config,
+                "anthropic_base_url",
+                anthropic_base_url,
+            )
+            anthropic_version = getattr(
+                run_config,
+                "anthropic_version",
+                anthropic_version,
+            )
 
-        self.model = model
-        self.api_key_env = api_key_env or "OPENAI_API_KEY"
-        self.base_url = base_url or ""
+        self.model = anthropic_model
+        self.api_key_env = anthropic_api_key_env or "ANTHROPIC_API_KEY"
+        self.base_url = anthropic_base_url or "https://api.anthropic.com"
+        self.version = anthropic_version or "2023-06-01"
 
     def analyze(
         self,
@@ -55,36 +65,31 @@ class OpenAIOpsAgent:
         *,
         output_dir: Path,
     ) -> dict[str, Any]:
-        """Generate one structured assessment for an ops task."""
-
         api_key = os.environ.get(self.api_key_env, "")
         if not api_key:
             raise ValueError(f"Environment variable `{self.api_key_env}` is not set.")
         if not self.model:
-            raise ValueError("OpenAIOpsAgent requires a configured OpenAI model.")
-        if OpenAI is None:
-            raise ImportError(
-                "OpenAIOpsAgent requires the `openai` package. Install dependencies or patch the client in tests."
-            )
+            raise ValueError("AnthropicOpsAgent requires a configured Anthropic model.")
 
-        client = OpenAI(api_key=api_key, base_url=self.base_url or None)
         prompt = self._build_prompt(problem)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        prompt_path = Path(output_dir) / "openai_ops_prompt.txt"
-        response_path = Path(output_dir) / "openai_ops_response.txt"
-        assessment_path = Path(output_dir) / "openai_ops_assessment.json"
-        telemetry_path = Path(output_dir) / "openai_ops_telemetry.json"
+        prompt_path = Path(output_dir) / "anthropic_ops_prompt.txt"
+        response_path = Path(output_dir) / "anthropic_ops_response.txt"
+        assessment_path = Path(output_dir) / "anthropic_ops_assessment.json"
+        telemetry_path = Path(output_dir) / "anthropic_ops_telemetry.json"
 
         started = perf_counter()
         call_records: list[dict[str, Any]] = []
-        response, call_record = timed_call(
+        raw_text, call_record = timed_call(
             "initial_answer",
-            client.responses.create,
+            anthropic_messages_create,
+            api_key=api_key,
             model=self.model,
-            input=prompt,
+            prompt=prompt,
+            base_url=self.base_url,
+            version=self.version,
         )
         call_records.append(call_record)
-        raw_text = getattr(response, "output_text", "") or ""
         prompt_path.write_text(prompt, encoding="utf-8")
         response_path.write_text(raw_text, encoding="utf-8")
 
@@ -99,14 +104,16 @@ class OpenAIOpsAgent:
                 invalid_response=raw_text,
                 validation_error=validation_error,
             )
-            repair_response, call_record = timed_call(
+            repair_text, call_record = timed_call(
                 f"repair_answer_{len(call_records)}",
-                client.responses.create,
+                anthropic_messages_create,
+                api_key=api_key,
                 model=self.model,
-                input=repair_prompt,
+                prompt=repair_prompt,
+                base_url=self.base_url,
+                version=self.version,
             )
             call_records.append(call_record)
-            repair_text = getattr(repair_response, "output_text", "") or ""
             raw_text = f"{raw_text}\n\n--- ASSESSMENT REPAIR ---\n{repair_text}"
             response_path.write_text(raw_text, encoding="utf-8")
             assessment = self._extract_assessment(repair_text)
@@ -217,7 +224,7 @@ class OpenAIOpsAgent:
             try:
                 parsed, _ = decoder.raw_decode(text[index:])
                 if isinstance(parsed, dict):
-                    return OpenAIOpsAgent._normalize_assessment(parsed)
+                    return AnthropicOpsAgent._normalize_assessment(parsed)
             except json.JSONDecodeError:
                 continue
         return {}
@@ -231,9 +238,9 @@ class OpenAIOpsAgent:
             evidence = []
 
         return {
-            "detected": OpenAIOpsAgent._coerce_bool(payload.get("detected")),
-            "localized": OpenAIOpsAgent._coerce_bool(payload.get("localized")),
-            "repaired": OpenAIOpsAgent._coerce_bool(payload.get("repaired")),
+            "detected": AnthropicOpsAgent._coerce_bool(payload.get("detected")),
+            "localized": AnthropicOpsAgent._coerce_bool(payload.get("localized")),
+            "repaired": AnthropicOpsAgent._coerce_bool(payload.get("repaired")),
             "summary": str(payload.get("summary", "")).strip(),
             "root_cause": str(payload.get("root_cause", "")).strip(),
             "remediation": str(payload.get("remediation", "")).strip(),

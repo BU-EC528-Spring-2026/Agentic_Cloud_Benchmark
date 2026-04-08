@@ -53,6 +53,14 @@ def _build_run_config(
         openai_model=str(payload.get("openai_model", "")),
         openai_api_key_env=str(payload.get("openai_api_key_env", "OPENAI_API_KEY")),
         openai_base_url=str(payload.get("openai_base_url", "")),
+        anthropic_model=str(payload.get("anthropic_model", "")),
+        anthropic_api_key_env=str(
+            payload.get("anthropic_api_key_env", "ANTHROPIC_API_KEY")
+        ),
+        anthropic_base_url=str(
+            payload.get("anthropic_base_url", "https://api.anthropic.com")
+        ),
+        anthropic_version=str(payload.get("anthropic_version", "2023-06-01")),
         max_steps=int(payload.get("max_steps", 10)),
         keep_artifacts=bool(payload.get("keep_artifacts", True)),
     )
@@ -84,6 +92,7 @@ def evaluate_predictions(
         "failure": 0,
         "missing": [],
         "results": {},
+        "timing_summary": {},
     }
 
     for entry in manifest["scenarios"]:
@@ -120,6 +129,7 @@ def evaluate_predictions(
             "summary_path": run_result.artifacts.summary_path,
             "code_backend": code_result.backend if code_result else "",
             "ops_backend": ops_result.backend if ops_result else "",
+            "run_total_seconds": run_result.unified_metrics.get("run_total_seconds", 0.0),
             "build_success": code_result.build_success if code_result else False,
             "test_success": code_result.test_success if code_result else False,
             "detected": ops_result.detected if ops_result else False,
@@ -133,6 +143,46 @@ def evaluate_predictions(
             "fail_to_pass_success": code_result.fail_to_pass_success if code_result else [],
             "pass_to_pass_failure": code_result.pass_to_pass_failure if code_result else [],
             "fail_to_pass_failure": code_result.fail_to_pass_failure if code_result else [],
+            "code_executor_total_seconds": code_result.metrics.get(
+                "executor_total_seconds",
+                0.0,
+            ) if code_result else 0.0,
+            "ops_executor_total_seconds": ops_result.metrics.get(
+                "executor_total_seconds",
+                0.0,
+            ) if ops_result else 0.0,
+            "code_agent_answer_count": code_result.metrics.get(
+                "agent_answer_count",
+                0,
+            ) if code_result else 0,
+            "ops_agent_answer_count": ops_result.metrics.get(
+                "agent_answer_count",
+                0,
+            ) if ops_result else 0,
+            "code_agent_answer_durations_seconds": code_result.metrics.get(
+                "agent_answer_durations_seconds",
+                [],
+            ) if code_result else [],
+            "ops_agent_answer_durations_seconds": ops_result.metrics.get(
+                "agent_answer_durations_seconds",
+                [],
+            ) if ops_result else [],
+            "code_agent_total_answer_seconds": code_result.metrics.get(
+                "agent_total_answer_seconds",
+                0.0,
+            ) if code_result else 0.0,
+            "ops_agent_total_answer_seconds": ops_result.metrics.get(
+                "agent_total_answer_seconds",
+                0.0,
+            ) if ops_result else 0.0,
+            "code_agent_average_answer_seconds": code_result.metrics.get(
+                "agent_average_answer_seconds",
+                0.0,
+            ) if code_result else 0.0,
+            "ops_agent_average_answer_seconds": ops_result.metrics.get(
+                "agent_average_answer_seconds",
+                0.0,
+            ) if ops_result else 0.0,
         }
         results["results"][scenario.scenario_id] = summary
         results["submitted"] += 1
@@ -140,6 +190,47 @@ def evaluate_predictions(
             results["success"] += 1
         else:
             results["failure"] += 1
+
+    submitted = int(results["submitted"])
+    run_total_seconds = sum(
+        float(item.get("run_total_seconds", 0.0))
+        for item in results["results"].values()
+    )
+    code_answer_count = sum(
+        int(item.get("code_agent_answer_count", 0))
+        for item in results["results"].values()
+    )
+    ops_answer_count = sum(
+        int(item.get("ops_agent_answer_count", 0))
+        for item in results["results"].values()
+    )
+    code_total_answer_seconds = sum(
+        float(item.get("code_agent_total_answer_seconds", 0.0))
+        for item in results["results"].values()
+    )
+    ops_total_answer_seconds = sum(
+        float(item.get("ops_agent_total_answer_seconds", 0.0))
+        for item in results["results"].values()
+    )
+    total_answer_count = code_answer_count + ops_answer_count
+    total_answer_seconds = code_total_answer_seconds + ops_total_answer_seconds
+    results["timing_summary"] = {
+        "scenario_run_total_seconds": round(run_total_seconds, 6),
+        "scenario_run_average_seconds": round(
+            run_total_seconds / submitted,
+            6,
+        ) if submitted else 0.0,
+        "code_agent_answer_count": code_answer_count,
+        "ops_agent_answer_count": ops_answer_count,
+        "total_agent_answer_count": total_answer_count,
+        "code_agent_total_answer_seconds": round(code_total_answer_seconds, 6),
+        "ops_agent_total_answer_seconds": round(ops_total_answer_seconds, 6),
+        "total_agent_answer_seconds": round(total_answer_seconds, 6),
+        "overall_agent_average_answer_seconds": round(
+            total_answer_seconds / total_answer_count,
+            6,
+        ) if total_answer_count else 0.0,
+    }
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(json.dumps(results, indent=2), encoding="utf-8")

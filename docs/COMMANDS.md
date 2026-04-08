@@ -39,10 +39,22 @@ Local code with an OpenAI code agent:
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
+Local code with a Claude code agent:
+
+```bash
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
+```
+
 Local combined with both OpenAI agents:
 
 ```bash
 acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+Local combined with Claude code and ops agents:
+
+```bash
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --aiops-agent-ref acbench.agents.anthropic_ops:AnthropicOpsAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
 GitHub-derived code with an OpenAI code agent:
@@ -55,6 +67,12 @@ GitHub-derived combined with both OpenAI agents:
 
 ```bash
 acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+GitHub-derived combined with Claude code and ops agents:
+
+```bash
+acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --aiops-agent-ref acbench.agents.anthropic_ops:AnthropicOpsAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
 Ops-only validation:
@@ -89,6 +107,15 @@ Edit `configs/openai_direct.local.json`, then run:
 
 ```bash
 python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
+
+## Anthropic Agent Batch Runs
+
+Copy the example config, fill the key, then run:
+
+```bash
+cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
+python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
 ```
 
 ## Export

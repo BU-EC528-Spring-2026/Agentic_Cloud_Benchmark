@@ -80,6 +80,13 @@ export OPENAI_API_KEY="<your-key>"
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
+Run one local code scenario with a Claude patch agent:
+
+```bash
+export ANTHROPIC_API_KEY="<your-key>"
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
+```
+
 Run one local combined scenario with both agents:
 
 ```bash
@@ -90,6 +97,12 @@ Run one GitHub-derived combined scenario with both agents:
 
 ```bash
 acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+Run one GitHub-derived combined scenario with Claude code and ops agents:
+
+```bash
+acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --aiops-agent-ref acbench.agents.anthropic_ops:AnthropicOpsAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
 Run the full local gold suite:
@@ -104,10 +117,17 @@ Run the full GitHub/OpenClaw gold suite:
 acbench --manifest manifests/github_openclaw_extended.json --predictions predictions/github_openclaw_extended_gold.json --evaluation-output runs/github_openclaw_extended_gold_eval.json
 ```
 
-Run the default local + GitHub agent batches from config:
+Run the default local + GitHub OpenAI agent batches from config:
 
 ```bash
 python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
+
+Run the default local + GitHub Anthropic agent batches from config:
+
+```bash
+cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
+python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
 ```
 
 ## Result Files
@@ -123,6 +143,7 @@ The main files are:
 Code runs may also include:
 
 - `openai_generated_patch.diff`
+- `anthropic_generated_patch.diff`
 - `build.log`
 - `test.log`
 
@@ -131,6 +152,9 @@ Ops runs may also include:
 - `ops_eval/openai_ops_prompt.txt`
 - `ops_eval/openai_ops_response.txt`
 - `ops_eval/openai_ops_assessment.json`
+- `ops_eval/anthropic_ops_prompt.txt`
+- `ops_eval/anthropic_ops_response.txt`
+- `ops_eval/anthropic_ops_assessment.json`
 
 ## What Is Already Validated
 

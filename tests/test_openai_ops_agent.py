@@ -117,6 +117,9 @@ The answer is below.
             self.assertTrue(Path(artifacts["response_path"]).exists())
             self.assertTrue(Path(artifacts["assessment_path"]).exists())
             self.assertTrue(artifacts["assessment"]["repaired"])
+            self.assertEqual(artifacts["telemetry"]["answer_count"], 1)
+            self.assertEqual(len(artifacts["telemetry"]["answer_durations_seconds"]), 1)
+            self.assertTrue(Path(artifacts["telemetry_path"]).exists())
             self.assertIn("structured answer", agent.last_prompt)
             self.assertIn("Restart the worker", agent.last_response)
             self.assertTrue(agent.last_assessment["detected"])
@@ -168,6 +171,7 @@ class FakeOpsAssessmentAgent:
         prompt_path = output_dir / "fake_prompt.txt"
         response_path = output_dir / "fake_response.txt"
         assessment_path = output_dir / "fake_assessment.json"
+        telemetry_path = output_dir / "fake_ops_telemetry.json"
         prompt_path.write_text("fake prompt", encoding="utf-8")
         response_path.write_text("fake response", encoding="utf-8")
         assessment = {
@@ -180,11 +184,22 @@ class FakeOpsAssessmentAgent:
             "evidence": list(problem.error_logs or ["synthetic evidence"]),
         }
         assessment_path.write_text(json.dumps(assessment), encoding="utf-8")
+        telemetry = {
+            "answer_count": 1,
+            "answer_durations_seconds": [0.25],
+            "total_answer_seconds": 0.25,
+            "average_answer_seconds": 0.25,
+            "wall_time_seconds": 0.3,
+            "answer_labels": ["initial_answer"],
+        }
+        telemetry_path.write_text(json.dumps(telemetry), encoding="utf-8")
         return {
             "assessment": assessment,
             "prompt_path": str(prompt_path),
             "response_path": str(response_path),
             "assessment_path": str(assessment_path),
+            "telemetry": telemetry,
+            "telemetry_path": str(telemetry_path),
         }
 
 

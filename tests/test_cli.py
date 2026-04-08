@@ -40,6 +40,22 @@ class CLITests(unittest.TestCase):
             "standalone-local-code",
         )
 
+    def test_parser_accepts_anthropic_flags(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "--scenario",
+                "tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json",
+                "--anthropic-model",
+                "claude-sonnet-4-20250514",
+                "--anthropic-api-key-env",
+                "ANTHROPIC_API_KEY",
+            ]
+        )
+
+        self.assertEqual(args.anthropic_model, "claude-sonnet-4-20250514")
+        self.assertEqual(args.anthropic_api_key_env, "ANTHROPIC_API_KEY")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -77,6 +77,10 @@ class OpsRunRequest:
     openai_model: str = ""
     openai_api_key_env: str = "OPENAI_API_KEY"
     openai_base_url: str = ""
+    anthropic_model: str = ""
+    anthropic_api_key_env: str = "ANTHROPIC_API_KEY"
+    anthropic_base_url: str = "https://api.anthropic.com"
+    anthropic_version: str = "2023-06-01"
 
 
 @dataclass(slots=True)

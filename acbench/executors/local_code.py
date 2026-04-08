@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+from time import perf_counter
+from typing import Any
 
 from acbench.agents.loader import load_object
 from acbench.executors.backends.code.standalone import (
@@ -32,6 +34,7 @@ class LocalCodeExecutor(BenchmarkExecutor):
         run_dir: Path,
         run_config: RunConfig,
     ) -> ExecutorResult:
+        started = perf_counter()
         repo_path = resolve_repo_path(scenario.service.repository_path or "")
         workspace_path = prepare_workspace(repo_path, run_dir)
 
@@ -50,7 +53,7 @@ class LocalCodeExecutor(BenchmarkExecutor):
 
         applied_patch = ""
         apply_success = True
-        patch_file_path = self._resolve_patch_file(
+        patch_file_path, agent_artifacts = self._resolve_patch_file(
             scenario=scenario,
             run_config=run_config,
             run_dir=run_dir,
@@ -92,6 +95,61 @@ class LocalCodeExecutor(BenchmarkExecutor):
         if scenario.success_criteria.require_repair and not repaired:
             success = False
 
+        metrics: dict[str, Any] = {
+            "rebuild_cmd_count": len(scenario.build.rebuild_cmds),
+            "test_cmd_count": len(scenario.build.test_cmds),
+            "pre_test_success": pre_test_success,
+            "post_test_success": test_success,
+            "pre_test_cases": len(pre_status),
+            "post_test_cases": len(post_status),
+            "executor_total_seconds": round(perf_counter() - started, 6),
+        }
+        details: dict[str, Any] = {
+            "repository_path": str(repo_path),
+            "workspace_path": str(workspace_path),
+            "max_steps": run_config.max_steps,
+            "apply_success": apply_success,
+            "code_patch_path": str(patch_file_path) if patch_file_path else "",
+            "pre_patch_status": pre_status,
+            "post_patch_status": post_status,
+        }
+        logs = {
+            "apply_log_path": str(apply_log_path) if patch_file_path else "",
+            "pre_patch_test_log_path": str(pre_patch_log_path),
+            "build_log_path": str(build_log_path),
+            "test_log_path": str(test_log_path),
+            "patch_path": str(patch_path),
+        }
+        telemetry = agent_artifacts.get("telemetry", {})
+        if isinstance(telemetry, dict) and telemetry:
+            metrics.update(
+                {
+                    "agent_answer_count": int(telemetry.get("answer_count", 0)),
+                    "agent_answer_durations_seconds": list(
+                        telemetry.get("answer_durations_seconds", [])
+                    ),
+                    "agent_total_answer_seconds": float(
+                        telemetry.get("total_answer_seconds", 0.0)
+                    ),
+                    "agent_average_answer_seconds": float(
+                        telemetry.get("average_answer_seconds", 0.0)
+                    ),
+                    "agent_wall_time_seconds": float(
+                        telemetry.get("wall_time_seconds", 0.0)
+                    ),
+                }
+            )
+            details["agent_telemetry"] = telemetry
+        telemetry_path = agent_artifacts.get("telemetry_path", "")
+        if telemetry_path:
+            logs["agent_telemetry_path"] = str(telemetry_path)
+        prompt_path = agent_artifacts.get("prompt_path", "")
+        response_path = agent_artifacts.get("response_path", "")
+        if prompt_path:
+            logs["agent_prompt_path"] = str(prompt_path)
+        if response_path:
+            logs["agent_response_path"] = str(response_path)
+
         return ExecutorResult(
             backend=self.backend_name,
             success=success,
@@ -102,30 +160,9 @@ class LocalCodeExecutor(BenchmarkExecutor):
             pass_to_pass_failure=pass_to_pass_failure,
             fail_to_pass_success=fail_to_pass,
             fail_to_pass_failure=fail_to_pass_failure,
-            metrics={
-                "rebuild_cmd_count": len(scenario.build.rebuild_cmds),
-                "test_cmd_count": len(scenario.build.test_cmds),
-                "pre_test_success": pre_test_success,
-                "post_test_success": test_success,
-                "pre_test_cases": len(pre_status),
-                "post_test_cases": len(post_status),
-            },
-            logs={
-                "apply_log_path": str(apply_log_path) if patch_file_path else "",
-                "pre_patch_test_log_path": str(pre_patch_log_path),
-                "build_log_path": str(build_log_path),
-                "test_log_path": str(test_log_path),
-                "patch_path": str(patch_path),
-            },
-            details={
-                "repository_path": str(repo_path),
-                "workspace_path": str(workspace_path),
-                "max_steps": run_config.max_steps,
-                "apply_success": apply_success,
-                "code_patch_path": str(patch_file_path) if patch_file_path else "",
-                "pre_patch_status": pre_status,
-                "post_patch_status": post_status,
-            },
+            metrics=metrics,
+            logs=logs,
+            details=details,
         )
 
     @staticmethod
@@ -133,11 +170,11 @@ class LocalCodeExecutor(BenchmarkExecutor):
         scenario: ScenarioSpec,
         run_config: RunConfig,
         run_dir: Path,
-    ) -> Path | None:
+    ) -> tuple[Path | None, dict[str, Any]]:
         if run_config.code_patch_path:
-            return Path(run_config.code_patch_path)
+            return Path(run_config.code_patch_path), {}
         if not run_config.code_agent_ref:
-            return None
+            return None, {}
 
         agent_cls = load_object(run_config.code_agent_ref)
         agent = agent_cls()
@@ -152,13 +189,13 @@ class LocalCodeExecutor(BenchmarkExecutor):
         )
         generated_patch_path = agent_artifacts.get("generated_patch_path", "")
         if generated_patch_path:
-            return Path(generated_patch_path)
+            return Path(generated_patch_path), agent_artifacts
         patch_text = agent_artifacts.get("patch_text", "")
         if not patch_text:
-            return None
+            return None, agent_artifacts
         patch_path = run_dir / "agent_generated_patch.diff"
         patch_path.write_text(patch_text, encoding="utf-8")
-        return patch_path
+        return patch_path, agent_artifacts
 
     def _run_commands(self, commands: list[str], repo_path: Path) -> tuple[bool, str]:
         """Run a list of commands and aggregate their output."""

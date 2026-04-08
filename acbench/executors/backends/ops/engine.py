@@ -58,9 +58,14 @@ class AgentDrivenOpsEngine:
         agent = agent_cls()
         if hasattr(agent, "configure"):
             agent.configure(
+                run_config=request,
                 model=request.openai_model,
                 api_key_env=request.openai_api_key_env,
                 base_url=request.openai_base_url,
+                anthropic_model=request.anthropic_model,
+                anthropic_api_key_env=request.anthropic_api_key_env,
+                anthropic_base_url=request.anthropic_base_url,
+                anthropic_version=request.anthropic_version,
             )
         if not hasattr(agent, "analyze"):
             raise ValueError(
@@ -124,11 +129,25 @@ class AgentDrivenOpsEngine:
                 "rubric_detection_match": detection_match,
                 "rubric_localization_match": localization_match,
                 "rubric_repair_match": repair_match,
+                "agent_answer_count": int(artifacts.get("telemetry", {}).get("answer_count", 0)),
+                "agent_answer_durations_seconds": list(
+                    artifacts.get("telemetry", {}).get("answer_durations_seconds", [])
+                ),
+                "agent_total_answer_seconds": float(
+                    artifacts.get("telemetry", {}).get("total_answer_seconds", 0.0)
+                ),
+                "agent_average_answer_seconds": float(
+                    artifacts.get("telemetry", {}).get("average_answer_seconds", 0.0)
+                ),
+                "agent_wall_time_seconds": float(
+                    artifacts.get("telemetry", {}).get("wall_time_seconds", 0.0)
+                ),
             },
             logs={
                 "prompt_path": str(artifacts.get("prompt_path", "")),
                 "response_path": str(artifacts.get("response_path", "")),
                 "assessment_path": str(artifacts.get("assessment_path", "")),
+                "agent_telemetry_path": str(artifacts.get("telemetry_path", "")),
             },
             details={
                 "mode": "agent-driven-ops",
@@ -136,6 +155,7 @@ class AgentDrivenOpsEngine:
                 "max_steps": request.max_steps,
                 "agent_ref": request.agent_ref,
                 "assessment": assessment,
+                "agent_telemetry": artifacts.get("telemetry", {}),
                 "matched_detection_keywords": _matched_keywords(
                     assessment,
                     request.problem.detection_keywords,

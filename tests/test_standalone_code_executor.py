@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 import unittest
+import json
 from pathlib import Path
 
 from acbench.executors.standalone_code import StandaloneCodeExecutor
@@ -23,10 +24,22 @@ class FakePatchAgent:
         )
         patch_text = patch_path.read_text(encoding="utf-8")
         generated_patch_path = output_dir / "fake_agent_patch.diff"
+        telemetry_path = output_dir / "fake_code_telemetry.json"
         generated_patch_path.write_text(patch_text, encoding="utf-8")
+        telemetry = {
+            "answer_count": 1,
+            "answer_durations_seconds": [0.2],
+            "total_answer_seconds": 0.2,
+            "average_answer_seconds": 0.2,
+            "wall_time_seconds": 0.25,
+            "answer_labels": ["initial_answer"],
+        }
+        telemetry_path.write_text(json.dumps(telemetry), encoding="utf-8")
         return {
             "patch_text": patch_text,
             "generated_patch_path": str(generated_patch_path),
+            "telemetry": telemetry,
+            "telemetry_path": str(telemetry_path),
         }
 
 

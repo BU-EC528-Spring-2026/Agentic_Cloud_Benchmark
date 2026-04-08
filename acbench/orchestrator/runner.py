@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from pathlib import Path
+from time import perf_counter
 import traceback
 
 from acbench.executors.dry_run import DryRunCodeExecutor, DryRunOpsExecutor
@@ -65,6 +66,7 @@ class ACBenchRunner:
         """Run one benchmark scenario."""
 
         run_config = run_config or RunConfig(dry_run=dry_run)
+        started = perf_counter()
         scenario = self.load_scenario(scenario_path)
         self._validate_backend_bindings(scenario)
         readiness = check_scenario_readiness(scenario)
@@ -130,6 +132,7 @@ class ACBenchRunner:
 
         result.finalize(status=self._derive_status(result))
         result.unified_metrics = self._merge_metrics(result)
+        result.unified_metrics["run_total_seconds"] = round(perf_counter() - started, 6)
         summary = self._build_summary(result)
         self._update_artifacts_from_results(result)
 
@@ -226,6 +229,7 @@ class ACBenchRunner:
             "title": result.title,
             "mode": result.mode,
             "status": result.status,
+            "run_total_seconds": result.unified_metrics.get("run_total_seconds", 0.0),
             "ops": None,
             "code": None,
         }
@@ -236,6 +240,22 @@ class ACBenchRunner:
                 "detected": result.ops_result.detected,
                 "localized": result.ops_result.localized,
                 "repaired": result.ops_result.repaired,
+                "executor_total_seconds": result.ops_result.metrics.get(
+                    "executor_total_seconds",
+                    0.0,
+                ),
+                "agent_answer_count": result.ops_result.metrics.get(
+                    "agent_answer_count",
+                    0,
+                ),
+                "agent_total_answer_seconds": result.ops_result.metrics.get(
+                    "agent_total_answer_seconds",
+                    0.0,
+                ),
+                "agent_average_answer_seconds": result.ops_result.metrics.get(
+                    "agent_average_answer_seconds",
+                    0.0,
+                ),
             }
         if result.code_result:
             summary["code"] = {
@@ -243,6 +263,22 @@ class ACBenchRunner:
                 "success": result.code_result.success,
                 "build_success": result.code_result.build_success,
                 "test_success": result.code_result.test_success,
+                "executor_total_seconds": result.code_result.metrics.get(
+                    "executor_total_seconds",
+                    0.0,
+                ),
+                "agent_answer_count": result.code_result.metrics.get(
+                    "agent_answer_count",
+                    0,
+                ),
+                "agent_total_answer_seconds": result.code_result.metrics.get(
+                    "agent_total_answer_seconds",
+                    0.0,
+                ),
+                "agent_average_answer_seconds": result.code_result.metrics.get(
+                    "agent_average_answer_seconds",
+                    0.0,
+                ),
                 "submitted_instance_id": result.code_result.metrics.get(
                     "submitted_instance_id",
                     "",
@@ -293,21 +329,70 @@ class ACBenchRunner:
             result.notes.append(
                 f"{stage_name} executor failed: {type(exc).__name__}: {exc}"
             )
+            telemetry_path, telemetry = ACBenchRunner._find_stage_telemetry(
+                run_dir=run_dir,
+                stage_name=stage_name,
+            )
+            metrics = {
+                "exception_type": type(exc).__name__,
+                "exception_message": str(exc),
+            }
+            logs = {
+                "exception_path": str(exception_path),
+            }
+            details = {
+                "exception": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "traceback_path": str(exception_path),
+                }
+            }
+            if telemetry:
+                metrics.update(
+                    {
+                        "agent_answer_count": int(telemetry.get("answer_count", 0)),
+                        "agent_answer_durations_seconds": list(
+                            telemetry.get("answer_durations_seconds", [])
+                        ),
+                        "agent_total_answer_seconds": float(
+                            telemetry.get("total_answer_seconds", 0.0)
+                        ),
+                        "agent_average_answer_seconds": float(
+                            telemetry.get("average_answer_seconds", 0.0)
+                        ),
+                        "agent_wall_time_seconds": float(
+                            telemetry.get("wall_time_seconds", 0.0)
+                        ),
+                    }
+                )
+                details["agent_telemetry"] = telemetry
+            if telemetry_path:
+                logs["agent_telemetry_path"] = str(telemetry_path)
             return ExecutorResult(
                 backend=getattr(executor, "backend_name", stage_name),
                 success=False,
-                metrics={
-                    "exception_type": type(exc).__name__,
-                    "exception_message": str(exc),
-                },
-                logs={
-                    "exception_path": str(exception_path),
-                },
-                details={
-                    "exception": {
-                        "type": type(exc).__name__,
-                        "message": str(exc),
-                        "traceback_path": str(exception_path),
-                    }
-                },
+                metrics=metrics,
+                logs=logs,
+                details=details,
             )
+
+    @staticmethod
+    def _find_stage_telemetry(
+        *,
+        run_dir: Path,
+        stage_name: str,
+    ) -> tuple[Path | None, dict]:
+        """Look for telemetry left behind by a partially failed stage."""
+
+        search_dir = run_dir / "ops_eval" if stage_name == "ops" else run_dir
+        candidates = sorted(search_dir.glob("*telemetry.json"))
+        if not candidates:
+            return None, {}
+        telemetry_path = candidates[0]
+        try:
+            payload = json.loads(telemetry_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return telemetry_path, {}
+        if not isinstance(payload, dict):
+            return telemetry_path, {}
+        return telemetry_path, payload

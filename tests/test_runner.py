@@ -154,6 +154,7 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(Path(result.artifacts.summary_path).exists())
         self.assertTrue(Path(result.artifacts.scenario_path).exists())
         self.assertTrue(Path(result.artifacts.diagnostics_path).exists())
+        self.assertIn("run_total_seconds", result.unified_metrics)
     def test_live_run_is_blocked_when_environment_is_not_ready(self) -> None:
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
@@ -314,6 +315,8 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result.code_result.backend, "acbench-local-code")
         self.assertTrue(result.code_result.success)
         self.assertTrue(Path(result.code_result.details["code_patch_path"]).exists())
+        self.assertEqual(result.code_result.metrics["agent_answer_count"], 1)
+        self.assertIn("agent_telemetry", result.code_result.details)
 
 
 if __name__ == "__main__":

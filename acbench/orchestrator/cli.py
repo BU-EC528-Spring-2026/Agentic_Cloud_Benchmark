@@ -89,6 +89,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional OpenAI-compatible base URL for custom providers.",
     )
     parser.add_argument(
+        "--anthropic-model",
+        default="",
+        help="Anthropic model name used by Claude-backed benchmark agents.",
+    )
+    parser.add_argument(
+        "--anthropic-api-key-env",
+        default="ANTHROPIC_API_KEY",
+        help="Environment variable name that stores the Anthropic API key.",
+    )
+    parser.add_argument(
+        "--anthropic-base-url",
+        default="https://api.anthropic.com",
+        help="Anthropic API base URL.",
+    )
+    parser.add_argument(
+        "--anthropic-version",
+        default="2023-06-01",
+        help="Anthropic API version header.",
+    )
+    parser.add_argument(
         "--manifest",
         default="",
         help="Path to a manifest JSON for batch prediction evaluation.",
@@ -234,6 +254,10 @@ def main() -> int:
         openai_model=args.openai_model,
         openai_api_key_env=args.openai_api_key_env,
         openai_base_url=args.openai_base_url,
+        anthropic_model=args.anthropic_model,
+        anthropic_api_key_env=args.anthropic_api_key_env,
+        anthropic_base_url=args.anthropic_base_url,
+        anthropic_version=args.anthropic_version,
         aiops_agent_type=args.aiops_agent_ref or "standalone-local-ops",
         code_agent_type=args.code_agent_ref or "unconfigured",
     )
