@@ -15,7 +15,7 @@ from acbench.executors.standalone_code import StandaloneCodeExecutor
 from acbench.models.result import ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
-from acbench.runner import ACBenchRunner
+from acbench.orchestrator.runner import ACBenchRunner
 
 
 class ScenarioModelTests(unittest.TestCase):
@@ -36,6 +36,97 @@ class ScenarioModelTests(unittest.TestCase):
                 }
             )
 
+    def test_github_scenarios_require_repo_url_and_commit(self) -> None:
+        with self.assertRaises(ValueError):
+            ScenarioSpec.from_dict(
+                {
+                    "scenario_id": "github-missing-commit",
+                    "title": "bad github scenario",
+                    "mode": "code_only",
+                    "source": {
+                        "type": "github",
+                        "repo_url": "https://github.com/example/project",
+                    },
+                    "service": {
+                        "application": "example",
+                        "service": "svc",
+                        "deployment": "local",
+                    },
+                    "code_fault": {
+                        "source": "acbench",
+                        "defect_id": "example-001",
+                    },
+                    "build": {
+                        "test_cmds": ["pytest"],
+                    },
+                }
+            )
+
+    def test_extended_scenario_fields_are_loaded(self) -> None:
+        scenario = ScenarioSpec.from_dict(
+            {
+                "scenario_id": "extended-local",
+                "title": "extended local scenario",
+                "mode": "code_only",
+                "source": {
+                    "type": "local_fixture",
+                    "snapshot_key": "fixture-a",
+                },
+                "service": {
+                    "application": "example",
+                    "service": "svc",
+                    "deployment": "local",
+                    "repository_path": "/tmp/example",
+                },
+                "task": {
+                    "summary": "repair a seeded defect",
+                    "instructions": "fix the bug and preserve passing tests",
+                },
+                "visible_context": {
+                    "reproduction_steps": ["run tests"],
+                    "relevant_files": ["src/example.py"],
+                },
+                "code_fault": {
+                    "source": "acbench",
+                    "defect_id": "example-001",
+                },
+                "environment": {
+                    "setup_cmds": ["python -m pip install -e ."],
+                    "env_vars": {"PYTHONPATH": "src"},
+                },
+                "build": {
+                    "test_cmds": ["pytest"],
+                },
+                "success_criteria": {
+                    "require_test_success": True,
+                },
+                "evaluation": {
+                    "strategy": "behavioral",
+                    "required_tests": ["tests/test_example.py::test_bug"],
+                },
+                "constraints": {
+                    "allow_network": False,
+                    "allow_test_changes": False,
+                    "max_runtime_minutes": 15,
+                },
+                "metadata": {
+                    "difficulty": "medium",
+                    "language": "python",
+                    "categories": ["code-repair"],
+                },
+            }
+        )
+
+        self.assertEqual(scenario.source.snapshot_key, "fixture-a")
+        self.assertEqual(scenario.task.summary, "repair a seeded defect")
+        self.assertEqual(scenario.visible_context.relevant_files, ["src/example.py"])
+        self.assertEqual(scenario.environment.env_vars["PYTHONPATH"], "src")
+        self.assertEqual(
+            scenario.evaluation.required_tests,
+            ["tests/test_example.py::test_bug"],
+        )
+        self.assertEqual(scenario.metadata.difficulty, "medium")
+
 
 class RunnerTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -48,10 +139,11 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "combined"
-            / "samplepkg__local_fixture.scenario.json"
+            / "billing_pricing__checkout_totals_incident.scenario.json"
         )
 
         result = runner.run(scenario_path, dry_run=True)
@@ -66,10 +158,11 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "combined"
-            / "samplepkg__local_fixture.scenario.json"
+            / "billing_pricing__checkout_totals_incident.scenario.json"
         )
 
         class FakeIssue:
@@ -87,7 +180,10 @@ class RunnerTests(unittest.TestCase):
                     "issues": [{"source": "test", "message": "synthetic readiness failure"}],
                 }
 
-        with patch("acbench.runner.check_scenario_readiness", return_value=FakeReadiness()):
+        with patch(
+            "acbench.orchestrator.runner.check_scenario_readiness",
+            return_value=FakeReadiness(),
+        ):
             with self.assertRaises(RuntimeError):
                 runner.run(scenario_path, dry_run=False)
 
@@ -95,10 +191,11 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "code"
-            / "samplepkg__local_repo_buggy.scenario.json"
+            / "billing_pricing__bundle_discount_threshold.scenario.json"
         )
 
         class FailingExecutor(BenchmarkExecutor):
@@ -134,10 +231,11 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "code"
-            / "samplepkg__local_repo_buggy.scenario.json"
+            / "billing_pricing__bundle_discount_threshold.scenario.json"
         )
 
         result = runner.run(
@@ -148,7 +246,7 @@ class RunnerTests(unittest.TestCase):
                 code_patch_path=str(
                     Path(__file__).resolve().parents[1]
                     / "patches"
-                    / "local_repo_buggy_fix.diff"
+                    / "billing_pricing_bundle_fix.diff"
                 ),
             ),
         )
@@ -161,15 +259,16 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "combined"
-            / "samplepkg__local_fixture.scenario.json"
+            / "billing_pricing__checkout_totals_incident.scenario.json"
         )
         patch_path = (
             Path(__file__).resolve().parents[1]
             / "patches"
-            / "local_repo_buggy_fix.diff"
+            / "billing_pricing_bundle_fix.diff"
         )
 
         result = runner.run(
@@ -189,10 +288,11 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "code"
-            / "samplepkg__local_repo_buggy.scenario.json"
+            / "billing_pricing__bundle_discount_threshold.scenario.json"
         )
 
         executor = runner.select_code_executor(
@@ -206,7 +306,7 @@ class RunnerTests(unittest.TestCase):
             dry_run=False,
             run_config=RunConfig(
                 dry_run=False,
-                code_agent_ref="acbench.tests.test_standalone_code_executor:FakePatchAgent",
+                code_agent_ref="tests.test_standalone_code_executor:FakePatchAgent",
                 openai_model="test-model",
             ),
         )

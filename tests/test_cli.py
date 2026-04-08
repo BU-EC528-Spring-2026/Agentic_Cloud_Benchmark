@@ -7,10 +7,26 @@ import json
 import unittest
 from contextlib import redirect_stdout
 
-from acbench.cli import run_doctor
+from acbench.orchestrator.cli import build_parser, run_doctor
 
 
 class CLITests(unittest.TestCase):
+    def test_parser_accepts_aiops_agent_ref(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "--scenario",
+                "tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json",
+                "--aiops-agent-ref",
+                "acbench.agents.openai_ops:OpenAIOpsAgent",
+            ]
+        )
+
+        self.assertEqual(
+            args.aiops_agent_ref,
+            "acbench.agents.openai_ops:OpenAIOpsAgent",
+        )
+
     def test_run_doctor_reports_standalone_backend(self) -> None:
         stream = io.StringIO()
         with redirect_stdout(stream):

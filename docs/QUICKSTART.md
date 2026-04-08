@@ -26,7 +26,7 @@ python -m pip install -e .
 Check that the CLI is available:
 
 ```powershell
-python -m acbench.cli --doctor
+acbench --doctor
 ```
 
 ## First Safe Command
@@ -34,7 +34,7 @@ python -m acbench.cli --doctor
 Validate a scenario without running it:
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
 ## First Real Run
@@ -42,13 +42,13 @@ python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo
 Run the built-in local evaluation bundle:
 
 ```powershell
-python -m acbench.cli --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
+acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
 Expected behavior:
 
 - the command writes a batch result JSON
-- two run directories are created under `runs/`
+- nine run directories are created under `runs/`
 - each run directory includes `result.json` and `summary.json`
 
 ## Run A Single Scenario
@@ -56,20 +56,20 @@ Expected behavior:
 Code-only:
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 Combined:
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/combined/samplepkg__local_fixture.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 ## Optional: Run With An OpenAI Agent
 
 ```powershell
 $env:OPENAI_API_KEY="<your-key>"
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
 ## Where To Look Next

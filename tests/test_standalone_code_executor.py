@@ -16,7 +16,11 @@ class FakePatchAgent:
     """Return the known-good patch for the local buggy fixture."""
 
     def generate_patch(self, scenario, run_config, *, output_dir):
-        patch_path = Path(__file__).resolve().parents[1] / "patches" / "local_repo_buggy_fix.diff"
+        patch_path = (
+            Path(__file__).resolve().parents[1]
+            / "patches"
+            / "billing_pricing_bundle_fix.diff"
+        )
         patch_text = patch_path.read_text(encoding="utf-8")
         generated_patch_path = output_dir / "fake_agent_patch.diff"
         generated_patch_path.write_text(patch_text, encoding="utf-8")
@@ -36,10 +40,11 @@ class StandaloneCodeExecutorTests(unittest.TestCase):
     def test_executor_can_use_agent_generated_patch(self) -> None:
         scenario = ScenarioSpec.from_file(
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "code"
-            / "samplepkg__local_repo_buggy.scenario.json"
+            / "billing_pricing__bundle_discount_threshold.scenario.json"
         )
         executor = StandaloneCodeExecutor()
 
@@ -47,7 +52,7 @@ class StandaloneCodeExecutorTests(unittest.TestCase):
             scenario=scenario,
             run_dir=self.temp_dir / "run",
             run_config=RunConfig(
-                code_agent_ref="acbench.tests.test_standalone_code_executor:FakePatchAgent",
+                code_agent_ref="tests.test_standalone_code_executor:FakePatchAgent",
                 openai_model="test-model",
             ),
         )

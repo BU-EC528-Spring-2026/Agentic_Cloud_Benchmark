@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from acbench.models.runtime import RunConfig
-from acbench.runner import ACBenchRunner
+from acbench.orchestrator.runner import ACBenchRunner
 
 
 class CombinedLocalTests(unittest.TestCase):
@@ -22,15 +22,16 @@ class CombinedLocalTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
+            / "local"
             / "combined"
-            / "samplepkg__local_fixture.scenario.json"
+            / "billing_pricing__checkout_totals_incident.scenario.json"
         )
         patch_path = (
             Path(__file__).resolve().parents[1]
             / "patches"
-            / "local_repo_buggy_fix.diff"
+            / "billing_pricing_bundle_fix.diff"
         )
 
         result = runner.run(

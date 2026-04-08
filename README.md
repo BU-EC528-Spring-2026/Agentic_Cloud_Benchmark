@@ -19,48 +19,59 @@ This repository is standalone-only. It does not depend on sibling repositories s
 
 Today the repo includes:
 
-- `4` standalone scenarios total
-- `3` code scenarios
-- `0` ops-only scenarios
-- `1` combined scenario
-- `2` service families
+- `12` standalone scenarios total
+- `9` local scenarios
+- `3` GitHub-backed smoke scenarios
+- `4` code scenarios
+- `4` ops-only scenarios
+- `4` combined scenarios
+- `7` service families
 
 Current scenarios:
 
-- [`samplepkg__local_repo_buggy.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json)
-- [`samplepkg__smoke_local.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/samplepkg__smoke_local.scenario.json)
-- [`astronomy_shop__product_catalog_seed_defect.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/code/astronomy_shop__product_catalog_seed_defect.scenario.json)
-- [`samplepkg__local_fixture.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios/combined/samplepkg__local_fixture.scenario.json)
+- Local scenarios now live under `tasks/scenarios/local/{code,ops,combined}/`
+- GitHub-backed scenarios now live under `tasks/scenarios/github/{code,ops,combined}/`
+- The first GitHub smoke set is:
+  - `openclaw__pairing_state_array_persistence.scenario.json`
+  - `openclaw__docker_healthcheck_false_unhealthy.scenario.json`
+  - `openclaw__completion_process_leak_incident.scenario.json`
 
 Current services:
 
-- [`samplepkg`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/services/samplepkg)
-- [`astronomy_shop`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/services/astronomy_shop)
+- [`billing_pricing`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/billing_pricing)
+- [`feature_router`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/feature_router)
+- [`maintenance_window`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/maintenance_window)
+- [`cache_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/cache_api)
+- [`queue_worker`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/queue_worker)
+- [`payments_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/payments_api)
+- [`openclaw`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/openclaw)
 
 ## Repository Layout
 
 Main directories:
 
-- [`standalone/scenarios/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios): canonical benchmark tasks
-- [`standalone/services/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/services): service metadata and service-level docs
-- [`agents/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/agents): OpenAI-backed and scripted agents
-- [`executors/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/executors): concrete code and ops execution paths
-- [`backends/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/backends): backend/runtime layers used by executors
-- [`fixtures/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/fixtures): local assets such as the buggy repository fixture
+- [`acbench/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench): core Python package
+- [`acbench/orchestrator/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator): CLI, run flow, readiness, and demo/export entrypoints
+- [`tasks/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks): canonical benchmark task definitions
+- [`acbench/agents/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/agents): OpenAI-backed and scripted agents
+- [`acbench/executors/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/executors): concrete code and ops execution paths
+- [`services/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services): service docs and local fixture repositories
+- [`acbench/evaluation/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation): batch scoring and report generation
+- [`acbench/models/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/models): shared runtime, scenario, and result schemas
 - [`patches/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/patches): reference patches
 - [`predictions/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/predictions): batch evaluation inputs
 - [`manifests/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/manifests): batch scenario lists
 - [`runs/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runs): per-run outputs
 - [`docs/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs): supporting docs
 
-Important top-level files:
+Important code files:
 
-- [`cli.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/cli.py): command-line entry point
-- [`runner.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runner.py): top-level benchmark orchestration
-- [`validate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/validate.py): scenario validation
-- [`doctor.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/doctor.py): environment inspection
-- [`evaluate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/evaluate.py): manifest/prediction evaluation helpers
-- [`report.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/report.py): markdown reporting helpers
+- [`acbench/__init__.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/__init__.py): package root
+- [`acbench/paths.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/paths.py): shared repository path helpers
+- [`acbench/orchestrator/runner.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator/runner.py): canonical benchmark orchestration
+- [`acbench/orchestrator/cli.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator/cli.py): canonical CLI implementation
+- [`acbench/evaluation/evaluate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation/evaluate.py): manifest/prediction evaluation helpers
+- [`acbench/evaluation/report.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation/report.py): markdown reporting helpers
 
 ## Quick Start
 
@@ -97,38 +108,47 @@ python -m pip install -e .
 ### 3. Check the environment
 
 ```powershell
-python -m acbench.cli --doctor
+acbench --doctor
 ```
 
 ### 4. Validate a scenario
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
 ### 5. Run the local batch demo
 
 ```powershell
-python -m acbench.cli --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
+acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
-That manifest currently evaluates these two scenarios:
+That manifest currently evaluates all `9` local scenarios across code-only, ops-only, and combined modes.
 
-- `code_only_local_repo_buggy`
-- `combined_local_fixture`
+GitHub-backed smoke evaluation:
+
+```powershell
+acbench --manifest manifests/github_openclaw_smoke.json --predictions predictions/github_openclaw_gold.json --evaluation-output runs/github_openclaw_smoke_eval.json
+```
+
+Run both local and GitHub manifests with the OpenAI patch agent:
+
+```powershell
+python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
 
 ## Common Workflows
 
 ### Run one code scenario with a reference patch
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 ### Run one combined scenario with a reference patch
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/combined/samplepkg__local_fixture.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 ### Run a code scenario with an OpenAI-backed patch agent
@@ -142,13 +162,13 @@ $env:OPENAI_API_KEY="<your-key>"
 Then run:
 
 ```powershell
-python -m acbench.cli --scenario standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
 ### Run the built-in local demo bundle
 
 ```powershell
-python -m acbench.cli --run-local-demo demo_out
+acbench --run-local-demo demo_out
 ```
 
 ## How Results Are Written
@@ -175,7 +195,7 @@ For local standalone runs, the most important indicators are:
 - `code.success`
 - `code.build_success`
 - `code.test_success`
-- `ops.success` for combined or future ops scenarios
+- `ops.success` for ops-only and combined scenarios
 
 If `status` is `success` and the relevant `code.success` or `ops.success` fields are true, the run succeeded.
 
@@ -202,10 +222,9 @@ Use these when you need more detail:
 
 ## Current Limitations
 
-- There are currently no standalone ops-only scenarios.
-- The benchmark suite is still small.
-- `astronomy_shop` currently has placeholder-style coverage compared with `samplepkg`.
-- The current local demo manifest contains only two scenarios.
+- Local ops scenarios are still synthetic even though they now have dedicated task-bank entries.
+- GitHub-backed scenarios currently run through localized fixture snapshots rather than live repository checkout.
+- The OpenAI batch runner expects a local config file; copy `configs/openai_direct.example.json` or edit `configs/openai_direct.local.json`.
 
 ## Repository Hygiene
 

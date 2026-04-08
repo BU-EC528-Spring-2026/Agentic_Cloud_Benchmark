@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
-from acbench.backends.code.runtime import (
+from acbench.executors.backends.code.runtime import (
     CodeRunOutcome,
     NativeCodeInstance,
     workspace_dir,

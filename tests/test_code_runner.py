@@ -7,12 +7,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.backends.code.runner import (
+from acbench.executors.backends.code.runner import (
     compare_statuses,
     parse_unittest_output,
     run_local_code_request,
 )
-from acbench.backends.code.runtime import CodeRunRequest, NativeCodeInstance
+from acbench.executors.backends.code.runtime import CodeRunRequest, NativeCodeInstance
 
 
 class CodeRunnerTests(unittest.TestCase):
@@ -48,8 +48,17 @@ class CodeRunnerTests(unittest.TestCase):
         self.assertEqual(result[3], [])
 
     def test_run_local_code_request_resolves_fixture_with_gold_patch(self) -> None:
-        fixture_repo = Path(__file__).resolve().parents[1] / "fixtures" / "local_repo_buggy"
-        patch_path = Path(__file__).resolve().parents[1] / "patches" / "local_repo_buggy_fix.diff"
+        fixture_repo = (
+            Path(__file__).resolve().parents[1]
+            / "services"
+            / "fixtures"
+            / "billing_pricing_buggy"
+        )
+        patch_path = (
+            Path(__file__).resolve().parents[1]
+            / "patches"
+            / "billing_pricing_bundle_fix.diff"
+        )
         outcome = run_local_code_request(
             CodeRunRequest(
                 instance=NativeCodeInstance(
@@ -72,7 +81,7 @@ class CodeRunnerTests(unittest.TestCase):
 
         self.assertTrue(outcome.resolved)
         self.assertEqual(len(outcome.fail_to_pass_success), 1)
-        self.assertEqual(len(outcome.pass_to_pass_success), 1)
+        self.assertEqual(len(outcome.pass_to_pass_success), 2)
         self.assertTrue(Path(outcome.logs["build_log_path"]).exists())
         self.assertTrue(Path(outcome.logs["test_log_path"]).exists())
 

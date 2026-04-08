@@ -4,48 +4,57 @@
 
 The execution path is:
 
-1. `cli.py` parses command-line inputs.
-2. `validate.py` loads and normalizes the scenario.
-3. `runner.py` selects the correct standalone executor.
+1. `acbench/orchestrator/cli.py` parses command-line inputs.
+2. `acbench/orchestrator/validate.py` loads and normalizes the scenario.
+3. `acbench/orchestrator/runner.py` selects the correct executor.
 4. The executor runs code and/or ops work.
 5. Result artifacts are written under `runs/`.
 
-## Main Code Areas
+## Main Layers
 
-- [`cli.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/cli.py): command-line interface
-- [`runner.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runner.py): top-level orchestration
-- [`validate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/validate.py): scenario validation and readiness checks
-- [`doctor.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/doctor.py): environment inspection
-- [`evaluate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/evaluate.py): manifest evaluation helpers
-- [`report.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/report.py): markdown reporting
+- `acbench/orchestrator/`: flow control, CLI, readiness checks, demo/export helpers
+- `tasks/`: scenario definitions and task assets
+- `acbench/executors/`: live and dry-run execution paths
+- `services/`: service docs and local fixture repositories
+- `acbench/evaluation/`: batch scoring and report generation
+- `acbench/agents/`: agent implementations
+- `acbench/models/`: shared schemas for scenarios, runtime config, and results
 
-## Scenario And Service Assets
+## Layer Boundaries
 
-- [`standalone/scenarios/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/scenarios): benchmark definitions
-- [`standalone/services/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/standalone/services): service-level docs and metadata
-- [`fixtures/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/fixtures): local fixture repositories and assets
-- [`patches/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/patches): reference patches
+- `orchestrator` decides what to run and in which order.
+- `tasks` defines what the agent is being asked to do.
+- `executors` decides how the work is performed.
+- `services` provides the codebase, runtime, and fixture context.
+- `evaluation` decides whether the run succeeded and how to summarize it.
+- `agents` generates actions or patches, but does not own platform flow.
+- `models` defines shared data shapes, but does not execute logic.
 
-## Execution Layers
+## Canonical Asset Locations
 
-- [`executors/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/executors): concrete execution paths
-- [`backends/code/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/backends/code): code backend helpers
-- [`backends/ops/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/backends/ops): ops backend helpers
-- [`agents/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/agents): patch or action generators
-- [`models/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/models): shared scenario/result/runtime models
+- `tasks/scenarios/`: benchmark definitions
+- `services/catalog/`: service-level docs and metadata
+- `services/fixtures/`: local fixture repositories and assets
+- `patches/`: reference patches
+- `manifests/`: batch scenario lists
+- `predictions/`: batch evaluation inputs
 
 ## Current Benchmark Shape
 
 Current scenario inventory:
 
 - `3` code scenarios
-- `0` ops-only scenarios
-- `1` combined scenario
+- `3` ops-only scenarios
+- `3` combined scenarios
 
 Current service families:
 
-- `samplepkg`
-- `astronomy_shop`
+- `billing_pricing`
+- `feature_router`
+- `maintenance_window`
+- `cache_api`
+- `queue_worker`
+- `payments_api`
 
 ## Result Artifacts
 

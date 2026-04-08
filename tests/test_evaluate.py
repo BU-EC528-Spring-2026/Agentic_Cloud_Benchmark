@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.evaluate import evaluate_predictions
+from acbench.evaluation.evaluate import evaluate_predictions
 
 
 class EvaluateTests(unittest.TestCase):
@@ -26,9 +26,94 @@ class EvaluateTests(unittest.TestCase):
             output_path=self.output_path,
         )
 
-        self.assertEqual(results["submitted"], 2)
-        self.assertEqual(results["success"], 2)
+        self.assertEqual(results["submitted"], 9)
+        self.assertEqual(results["success"], 9)
         self.assertTrue(self.output_path.exists())
         payload = json.loads(self.output_path.read_text(encoding="utf-8"))
-        self.assertIn("code_only_local_repo_buggy", payload["results"])
-        self.assertIn("combined_local_fixture", payload["results"])
+        self.assertIn("code_only_billing_pricing_bundle_threshold", payload["results"])
+        self.assertIn("ops_only_cache_api_stale_index", payload["results"])
+        self.assertIn("combined_billing_pricing_checkout_totals", payload["results"])
+
+    def test_prediction_defaults_can_drive_agent_runs(self) -> None:
+        manifest_path = self.temp_dir / "single_scenario_manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "name": "single-code-scenario",
+                    "scenarios": [
+                        {
+                            "scenario": "tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json"
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        predictions_path = self.temp_dir / "agent_predictions.json"
+        predictions_path.write_text(
+            json.dumps(
+                {
+                    "_defaults": {
+                        "code_agent_ref": "tests.test_standalone_code_executor:FakePatchAgent",
+                        "openai_model": "test-model",
+                    },
+                    "code_only_billing_pricing_bundle_threshold": {},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        results = evaluate_predictions(
+            manifest_path=manifest_path,
+            predictions_path=predictions_path,
+            output_path=self.output_path,
+        )
+
+        self.assertEqual(results["submitted"], 1)
+        self.assertEqual(results["success"], 1)
+        self.assertIn(
+            "code_only_billing_pricing_bundle_threshold",
+            results["results"],
+        )
+
+    def test_prediction_defaults_can_drive_ops_agent_runs(self) -> None:
+        manifest_path = self.temp_dir / "single_ops_manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "name": "single-ops-scenario",
+                    "scenarios": [
+                        {
+                            "scenario": "tasks/scenarios/local/ops/queue_worker__backlog_spike.scenario.json"
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        predictions_path = self.temp_dir / "agent_ops_predictions.json"
+        predictions_path.write_text(
+            json.dumps(
+                {
+                    "_defaults": {
+                        "aiops_agent_ref": "tests.test_openai_ops_agent:FakeOpsAssessmentAgent",
+                        "openai_model": "test-model",
+                    },
+                    "ops_only_queue_worker_backlog_spike": {},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        results = evaluate_predictions(
+            manifest_path=manifest_path,
+            predictions_path=predictions_path,
+            output_path=self.output_path,
+        )
+
+        self.assertEqual(results["submitted"], 1)
+        self.assertEqual(results["success"], 1)
+        self.assertEqual(
+            results["results"]["ops_only_queue_worker_backlog_spike"]["ops_backend"],
+            "acbench-local-ops",
+        )

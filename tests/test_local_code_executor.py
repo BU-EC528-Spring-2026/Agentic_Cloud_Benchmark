@@ -61,7 +61,12 @@ class LocalCodeExecutorTests(unittest.TestCase):
         self.assertTrue(Path(result.logs["test_log_path"]).exists())
 
     def test_local_executor_applies_patch_file(self) -> None:
-        fixture_repo = Path(__file__).resolve().parents[1] / "fixtures" / "local_repo_buggy"
+        fixture_repo = (
+            Path(__file__).resolve().parents[1]
+            / "services"
+            / "fixtures"
+            / "billing_pricing_buggy"
+        )
         scenario = ScenarioSpec.from_dict(
             {
                 "scenario_id": "local-code-patch",
@@ -69,7 +74,7 @@ class LocalCodeExecutorTests(unittest.TestCase):
                 "mode": "code_only",
                 "service": {
                     "application": "fixture",
-                    "service": "samplepkg",
+                    "service": "billing-pricing",
                     "repository_path": str(fixture_repo),
                 },
                 "code_fault": {
@@ -99,7 +104,7 @@ class LocalCodeExecutorTests(unittest.TestCase):
                 code_patch_path=str(
                     Path(__file__).resolve().parents[1]
                     / "patches"
-                    / "local_repo_buggy_fix.diff"
+                    / "billing_pricing_bundle_fix.diff"
                 ),
             ),
         )
@@ -108,4 +113,4 @@ class LocalCodeExecutorTests(unittest.TestCase):
         self.assertTrue(result.details["apply_success"])
         self.assertTrue(Path(result.logs["apply_log_path"]).exists())
         self.assertEqual(len(result.fail_to_pass_success), 1)
-        self.assertEqual(len(result.pass_to_pass_success), 1)
+        self.assertEqual(len(result.pass_to_pass_success), 2)

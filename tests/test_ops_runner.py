@@ -8,8 +8,12 @@ import json
 from enum import Enum
 from pathlib import Path
 
-from acbench.backends.ops.runner import build_ops_request, run_ops_request, write_ops_artifacts
-from acbench.backends.ops.runtime import NativeOpsProblem
+from acbench.executors.backends.ops.runner import (
+    build_ops_request,
+    run_ops_request,
+    write_ops_artifacts,
+)
+from acbench.executors.backends.ops.runtime import NativeOpsProblem
 
 
 class OpsRunnerTests(unittest.TestCase):
@@ -27,7 +31,6 @@ class OpsRunnerTests(unittest.TestCase):
                 ),
                 output_dir=Path(tmp_dir),
                 max_steps=1,
-                agent_ref="agent:Class",
             )
             outcome = write_ops_artifacts(request, run_ops_request(request))
             outcome.metrics["status"] = SubmissionStatus.INCORRECT
@@ -90,7 +93,6 @@ class OpsRunnerTests(unittest.TestCase):
                 ),
                 output_dir=Path(tmp_dir),
                 max_steps=4,
-                agent_ref="agent:Class",
             )
             outcome = write_ops_artifacts(
                 request,
@@ -106,7 +108,7 @@ class OpsRunnerTests(unittest.TestCase):
                 Path(outcome.logs["trace_path"]).read_text(encoding="utf-8")
             )
             self.assertEqual(outcome_payload["problem_id"], "p-1")
-            self.assertEqual(trace_payload["agent_ref"], "agent:Class")
+            self.assertEqual(trace_payload["agent_ref"], "")
             self.assertEqual(trace_payload["events"][0]["type"], "ops_run_started")
 
 

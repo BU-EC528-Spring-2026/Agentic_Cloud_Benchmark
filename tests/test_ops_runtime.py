@@ -7,7 +7,11 @@ import unittest
 from enum import Enum
 from pathlib import Path
 
-from acbench.backends.ops.runtime import NativeOpsProblem, OpsRunOutcome, OpsRunRequest
+from acbench.executors.backends.ops.runtime import (
+    NativeOpsProblem,
+    OpsRunOutcome,
+    OpsRunRequest,
+)
 from acbench.models.scenario import ScenarioSpec
 
 
@@ -38,10 +42,20 @@ class OpsRuntimeTests(unittest.TestCase):
                     "application": "astronomy-shop",
                     "service": "product-catalog",
                 },
+                "task": {
+                    "summary": "Detect synthetic ops issue",
+                    "instructions": "Use the evidence to localize the problem.",
+                },
+                "visible_context": {
+                    "issue_text": "Catalog updates are stale.",
+                    "error_logs": ["freshness lag exceeded SLO"],
+                },
                 "ops_fault": {
                     "source": "acbench",
                     "problem_id": "p-1",
                     "description": "synthetic fault",
+                    "detection_keywords": ["stale"],
+                    "localization_keywords": ["catalog"],
                 },
                 "success_criteria": {
                     "require_detection": True,
@@ -59,6 +73,9 @@ class OpsRuntimeTests(unittest.TestCase):
         self.assertTrue(problem.require_detection)
         self.assertTrue(problem.require_localization)
         self.assertFalse(problem.require_repair)
+        self.assertEqual(problem.task_summary, "Detect synthetic ops issue")
+        self.assertEqual(problem.issue_text, "Catalog updates are stale.")
+        self.assertIn("stale", problem.detection_keywords)
 
     def test_ops_run_outcome_to_executor_payload(self) -> None:
         outcome = OpsRunOutcome(

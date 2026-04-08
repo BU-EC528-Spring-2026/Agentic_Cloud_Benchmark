@@ -10,25 +10,33 @@ from acbench.models.scenario import ScenarioSpec
 
 
 class StandaloneLayoutTests(unittest.TestCase):
-    def test_canonical_standalone_scenarios_load(self) -> None:
+    def test_canonical_task_scenarios_load(self) -> None:
         root = Path(__file__).resolve().parents[1]
         for relative_path in (
-            "standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json",
-            "standalone/scenarios/code/samplepkg__smoke_local.scenario.json",
-            "standalone/scenarios/code/astronomy_shop__product_catalog_seed_defect.scenario.json",
-            "standalone/scenarios/combined/samplepkg__local_fixture.scenario.json",
+            "tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json",
+            "tasks/scenarios/local/code/feature_router__denylist_precedence.scenario.json",
+            "tasks/scenarios/local/code/maintenance_window__overnight_rollover.scenario.json",
+            "tasks/scenarios/local/ops/cache_api__stale_index_alert.scenario.json",
+            "tasks/scenarios/local/ops/queue_worker__backlog_spike.scenario.json",
+            "tasks/scenarios/local/ops/payments_api__restart_loop_diagnosis.scenario.json",
+            "tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json",
+            "tasks/scenarios/local/combined/feature_router__rollout_guard_incident.scenario.json",
+            "tasks/scenarios/local/combined/maintenance_window__midnight_skip_incident.scenario.json",
+            "tasks/scenarios/github/code/openclaw__pairing_state_array_persistence.scenario.json",
+            "tasks/scenarios/github/ops/openclaw__docker_healthcheck_false_unhealthy.scenario.json",
+            "tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json",
         ):
             scenario = ScenarioSpec.from_file(root / relative_path)
             self.assertTrue(scenario.scenario_id)
 
     def test_new_namespace_packages_are_importable(self) -> None:
         for module_name in (
-            "acbench.standalone.benchmarks.code",
-            "acbench.standalone.benchmarks.ops",
-            "acbench.standalone.benchmarks.combined",
-            "acbench.standalone.runtimes.code",
-            "acbench.standalone.runtimes.ops",
-            "acbench.standalone.runtimes.combined",
+            "acbench.orchestrator",
+            "acbench.tasks",
+            "acbench.services",
+            "acbench.evaluation",
+            "acbench.executors.backends.code",
+            "acbench.executors.backends.ops",
         ):
             module = importlib.import_module(module_name)
             self.assertIsNotNone(module)

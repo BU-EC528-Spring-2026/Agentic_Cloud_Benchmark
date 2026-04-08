@@ -1,13 +1,16 @@
-"""Tests for the minimal OpenAI-backed ops agent."""
+"""Tests for the OpenAI-backed ops assessment agent."""
 
 from __future__ import annotations
 
-import asyncio
+import json
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from acbench.agents.openai_ops import OpenAIOpsAgent
+from acbench.executors.backends.ops.runtime import NativeOpsProblem
 from acbench.models.runtime import RunConfig
 
 
@@ -17,12 +20,14 @@ class _FakeResponse:
 
 
 class _FakeClient:
-    def __init__(self, output_text: str) -> None:
-        self._output_text = output_text
+    def __init__(self, outputs: list[str]) -> None:
+        self._outputs = list(outputs)
         self.responses = self
 
     def create(self, **kwargs):
-        return _FakeResponse(self._output_text)
+        if not self._outputs:
+            raise AssertionError("Fake client received more requests than expected.")
+        return _FakeResponse(self._outputs.pop(0))
 
 
 class OpenAIOpsAgentTests(unittest.TestCase):
@@ -39,48 +44,148 @@ class OpenAIOpsAgentTests(unittest.TestCase):
         self.assertEqual(agent.api_key_env, "TEST_OPENAI_KEY")
         self.assertEqual(agent.base_url, "https://example.invalid/v1")
 
-    def test_agent_normalizes_yes_submission(self) -> None:
+    def test_agent_extracts_plain_json_assessment(self) -> None:
+        response = json.dumps(
+            {
+                "detected": True,
+                "localized": True,
+                "repaired": False,
+                "summary": "Queue backlog detected.",
+                "root_cause": "The worker tier is throttled.",
+                "remediation": "Restart or scale the worker tier.",
+                "evidence": ["consumer lag rose sharply"],
+            }
+        )
+        assessment = OpenAIOpsAgent._extract_assessment(response)
+        self.assertTrue(assessment["detected"])
+        self.assertEqual(assessment["evidence"], ["consumer lag rose sharply"])
+
+    def test_agent_extracts_fenced_json_assessment(self) -> None:
+        response = """
+The answer is below.
+```json
+{
+  "detected": true,
+  "localized": true,
+  "repaired": true,
+  "summary": "Health check is falsely marking the service unhealthy.",
+  "root_cause": "The node fetch healthcheck exits before the request settles.",
+  "remediation": "Use a blocking curl or await fetch in the healthcheck command.",
+  "evidence": ["docker ps shows unhealthy", "curl /healthz returns 200"]
+}
+```
+"""
+        assessment = OpenAIOpsAgent._extract_assessment(response)
+        self.assertTrue(assessment["localized"])
+        self.assertIn("curl /healthz returns 200", assessment["evidence"])
+
+    def test_agent_analyze_writes_prompt_response_and_assessment(self) -> None:
         agent = OpenAIOpsAgent()
         agent.configure(RunConfig(openai_model="gpt-test"))
-        agent.init_context("problem", "instructions", {})
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
-            with patch(
-                "acbench.agents.openai_ops.OpenAI",
-                return_value=_FakeClient('submit("Yes")'),
-            ):
-                action = asyncio.run(agent.get_action("observation"))
-        self.assertEqual(action, '```\nsubmit("Yes")\n```')
+        problem = NativeOpsProblem(
+            problem_id="ops-1",
+            source="acbench",
+            application="queue-worker",
+            service="notification-consumer",
+            task_summary="Triage a backlog incident.",
+            task_instructions="Use the evidence and return a structured answer.",
+            issue_text="Queue backlog spiked.",
+            require_detection=True,
+            require_localization=True,
+            require_repair=True,
+        )
+        response = json.dumps(
+            {
+                "detected": True,
+                "localized": True,
+                "repaired": True,
+                "summary": "The backlog incident is real.",
+                "root_cause": "The worker tier is stuck.",
+                "remediation": "Restart the worker and increase concurrency.",
+                "evidence": ["consumer lag rose from 12s to 540s"],
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch(
+                    "acbench.agents.openai_ops.OpenAI",
+                    return_value=_FakeClient([response]),
+                ):
+                    artifacts = agent.analyze(problem, output_dir=Path(tmp_dir))
 
-    def test_agent_normalizes_plain_no_response(self) -> None:
+            self.assertTrue(Path(artifacts["prompt_path"]).exists())
+            self.assertTrue(Path(artifacts["response_path"]).exists())
+            self.assertTrue(Path(artifacts["assessment_path"]).exists())
+            self.assertTrue(artifacts["assessment"]["repaired"])
+            self.assertIn("structured answer", agent.last_prompt)
+            self.assertIn("Restart the worker", agent.last_response)
+            self.assertTrue(agent.last_assessment["detected"])
+
+    def test_agent_repairs_invalid_json_response(self) -> None:
         agent = OpenAIOpsAgent()
         agent.configure(RunConfig(openai_model="gpt-test"))
-        agent.init_context("problem", "instructions", {})
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
-            with patch(
-                "acbench.agents.openai_ops.OpenAI",
-                return_value=_FakeClient("No, this does not appear to be present."),
-            ):
-                action = asyncio.run(agent.get_action("observation"))
-        self.assertEqual(action, '```\nsubmit("No")\n```')
+        problem = NativeOpsProblem(
+            problem_id="ops-2",
+            source="acbench",
+            application="cache-api",
+            service="search-index",
+            task_summary="Triage stale index incident.",
+            task_instructions="Return JSON only.",
+            issue_text="Search results are stale.",
+            require_detection=True,
+        )
+        fixed = json.dumps(
+            {
+                "detected": True,
+                "localized": True,
+                "repaired": True,
+                "summary": "The index is stale.",
+                "root_cause": "The indexing path is lagging.",
+                "remediation": "Reindex and refresh the cache.",
+                "evidence": ["freshness lag exceeded the SLO"],
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch(
+                    "acbench.agents.openai_ops.OpenAI",
+                    return_value=_FakeClient(["not json", fixed]),
+                ):
+                    artifacts = agent.analyze(problem, output_dir=Path(tmp_dir))
 
-    def test_agent_records_prompt_response_and_action(self) -> None:
-        agent = OpenAIOpsAgent()
-        agent.configure(RunConfig(openai_model="gpt-test"))
-        agent.init_context("problem", "instructions", {})
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
-            with patch(
-                "acbench.agents.openai_ops.OpenAI",
-                return_value=_FakeClient('submit("Yes")'),
-            ):
-                action = asyncio.run(agent.get_action("observation"))
-        self.assertEqual(action, '```\nsubmit("Yes")\n```')
-        self.assertIn("Important detection rule", agent.last_prompt)
-        self.assertEqual(agent.last_response, 'submit("Yes")')
-        self.assertEqual(agent.last_action, '```\nsubmit("Yes")\n```')
+        self.assertTrue(artifacts["assessment"]["detected"])
+        self.assertIn("ASSESSMENT REPAIR", agent.last_response)
 
-    def test_agent_normalizes_single_line_fenced_submit(self) -> None:
-        action = OpenAIOpsAgent._normalize_action('```submit("Yes")```')
-        self.assertEqual(action, '```\nsubmit("Yes")\n```')
+
+class FakeOpsAssessmentAgent:
+    """Tiny fake ops agent for executor and engine tests."""
+
+    def configure(self, **kwargs) -> None:
+        self.config = kwargs
+
+    def analyze(self, problem, *, output_dir: Path) -> dict[str, object]:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        prompt_path = output_dir / "fake_prompt.txt"
+        response_path = output_dir / "fake_response.txt"
+        assessment_path = output_dir / "fake_assessment.json"
+        prompt_path.write_text("fake prompt", encoding="utf-8")
+        response_path.write_text("fake response", encoding="utf-8")
+        assessment = {
+            "detected": True,
+            "localized": True,
+            "repaired": True,
+            "summary": f"{problem.application} incident detected",
+            "root_cause": f"{problem.service} fault localized to {problem.localization_keywords[0] if problem.localization_keywords else 'service'}",
+            "remediation": f"Apply repair for {problem.repair_keywords[0] if problem.repair_keywords else 'incident'}",
+            "evidence": list(problem.error_logs or ["synthetic evidence"]),
+        }
+        assessment_path.write_text(json.dumps(assessment), encoding="utf-8")
+        return {
+            "assessment": assessment,
+            "prompt_path": str(prompt_path),
+            "response_path": str(response_path),
+            "assessment_path": str(assessment_path),
+        }
 
 
 if __name__ == "__main__":

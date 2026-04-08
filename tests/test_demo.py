@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.demo import run_local_demo
+from acbench.orchestrator.demo import run_local_demo
 
 
 class DemoTests(unittest.TestCase):
@@ -21,4 +21,4 @@ class DemoTests(unittest.TestCase):
         bundle = run_local_demo(self.temp_dir)
         self.assertTrue(Path(bundle["json_path"]).exists())
         self.assertTrue(Path(bundle["markdown_path"]).exists())
-        self.assertEqual(bundle["results"]["success"], 2)
+        self.assertEqual(bundle["results"]["success"], 9)

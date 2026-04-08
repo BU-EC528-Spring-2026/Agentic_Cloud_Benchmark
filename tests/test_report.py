@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.report import (
+from acbench.evaluation.report import (
     render_markdown_report,
     render_run_markdown_report,
     write_markdown_report_from_json,
@@ -34,19 +34,24 @@ class ReportTests(unittest.TestCase):
                 "missing": [],
                 "results": {
                     "scenario-a": {
+                        "mode": "ops_only",
                         "status": "success",
                         "build_success": True,
                         "test_success": True,
+                        "detected": True,
+                        "localized": True,
+                        "repaired": True,
                         "fail_to_pass_success": ["t1"],
                         "pass_to_pass_success": ["t2"],
                         "code_backend": "acbench-local-code",
+                        "ops_backend": "acbench-local-ops",
                         "result_path": "a/result.json",
                         "summary_path": "a/summary.json",
                     }
                 },
             }
         )
-        self.assertIn("| Scenario | Status | Build | Test | FAIL_TO_PASS | PASS_TO_PASS |", markdown)
+        self.assertIn("| Scenario | Mode | Status | Build | Test | Detect | Localize | Repair | FAIL_TO_PASS | PASS_TO_PASS |", markdown)
         self.assertIn("scenario-a", markdown)
 
     def test_write_markdown_report_from_json(self) -> None:
