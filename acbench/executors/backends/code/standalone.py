@@ -240,8 +240,6 @@ def parse_unified_hunks(
         if line.startswith("@@"):
             if in_hunk:
                 hunks.append((current_source, current_target))
-            if not re.match(r"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@", line):
-                return f"Unsupported hunk header while patching {target_file}\n"
             current_source = []
             current_target = []
             in_hunk = True

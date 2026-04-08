@@ -35,6 +35,9 @@ class LocalOpsExecutor(BenchmarkExecutor):
             max_steps=run_config.max_steps,
             agent_ref=run_config.aiops_agent_ref,
             keep_artifacts=run_config.keep_artifacts,
+            openai_model=run_config.openai_model,
+            openai_api_key_env=run_config.openai_api_key_env,
+            openai_base_url=run_config.openai_base_url,
         )
         outcome = write_ops_artifacts(request, run_ops_request(request))
         return outcome.to_executor_result(self.backend_name)

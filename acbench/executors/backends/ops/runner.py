@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from acbench.executors.backends.ops.engine import build_engine_for_problem
+from acbench.executors.backends.ops.engine import build_engine_for_request
 from acbench.executors.backends.ops.runtime import (
     NativeOpsProblem,
     OpsRunOutcome,
@@ -17,7 +17,7 @@ from acbench.models.result import _json_safe
 def run_ops_request(request: OpsRunRequest) -> OpsRunOutcome:
     """Run one ops request through the currently selected internal ops engine."""
 
-    return build_engine_for_problem(request.problem).run(request)
+    return build_engine_for_request(request).run(request)
 
 
 def write_ops_artifacts(
@@ -78,6 +78,9 @@ def build_ops_request(
     max_steps: int = 10,
     agent_ref: str = "",
     keep_artifacts: bool = True,
+    openai_model: str = "",
+    openai_api_key_env: str = "OPENAI_API_KEY",
+    openai_base_url: str = "",
 ) -> OpsRunRequest:
     """Build one normalized ops run request."""
 
@@ -87,4 +90,7 @@ def build_ops_request(
         max_steps=max_steps,
         agent_ref=agent_ref,
         keep_artifacts=keep_artifacts,
+        openai_model=openai_model,
+        openai_api_key_env=openai_api_key_env,
+        openai_base_url=openai_base_url,
     )

@@ -12,23 +12,32 @@ This repository is standalone-only. It does not depend on sibling repositories s
 
 Today the repo includes:
 
-- `4` standalone scenarios total
-- `3` code scenarios
-- `0` ops-only scenarios
-- `1` combined scenario
-- `2` service families
+- `12` standalone scenarios total
+- `9` local scenarios
+- `3` GitHub-backed smoke scenarios
+- `4` code scenarios
+- `4` ops-only scenarios
+- `4` combined scenarios
+- `7` service families
 
 Current scenarios:
 
-- [`samplepkg__local_repo_buggy.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.json)
-- [`samplepkg__smoke_local.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks/scenarios/code/samplepkg__smoke_local.scenario.json)
-- [`astronomy_shop__product_catalog_seed_defect.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks/scenarios/code/astronomy_shop__product_catalog_seed_defect.scenario.json)
-- [`samplepkg__local_fixture.scenario.json`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks/scenarios/combined/samplepkg__local_fixture.scenario.json)
+- Local scenarios now live under `tasks/scenarios/local/{code,ops,combined}/`
+- GitHub-backed scenarios now live under `tasks/scenarios/github/{code,ops,combined}/`
+- The first GitHub smoke set is:
+  - `openclaw__pairing_state_array_persistence.scenario.json`
+  - `openclaw__docker_healthcheck_false_unhealthy.scenario.json`
+  - `openclaw__completion_process_leak_incident.scenario.json`
 
 Current services:
 
-- [`samplepkg`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/samplepkg)
-- [`astronomy_shop`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/astronomy_shop)
+- [`billing_pricing`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/billing_pricing)
+- [`feature_router`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/feature_router)
+- [`maintenance_window`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/maintenance_window)
+- [`cache_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/cache_api)
+- [`queue_worker`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/queue_worker)
+- [`payments_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/payments_api)
+- [`openclaw`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/openclaw)
 
 ## Repository Layout
 
@@ -98,7 +107,7 @@ acbench --doctor
 ### 4. Validate a scenario
 
 ```powershell
-acbench --scenario tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.json --validate-scenario
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
 ### 5. Run the local batch demo
@@ -107,23 +116,32 @@ acbench --scenario tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.jso
 acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
-That manifest currently evaluates these two scenarios:
+That manifest currently evaluates all `9` local scenarios across code-only, ops-only, and combined modes.
 
-- `code_only_local_repo_buggy`
-- `combined_local_fixture`
+GitHub-backed smoke evaluation:
+
+```powershell
+acbench --manifest manifests/github_openclaw_smoke.json --predictions predictions/github_openclaw_gold.json --evaluation-output runs/github_openclaw_smoke_eval.json
+```
+
+Run both local and GitHub manifests with the OpenAI patch agent:
+
+```powershell
+python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
 
 ## Common Workflows
 
 ### Run one code scenario with a reference patch
 
 ```powershell
-acbench --scenario tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 ### Run one combined scenario with a reference patch
 
 ```powershell
-acbench --scenario tasks/scenarios/combined/samplepkg__local_fixture.scenario.json --code-patch patches/local_repo_buggy_fix.diff
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
 ### Run a code scenario with an OpenAI-backed patch agent
@@ -137,7 +155,7 @@ $env:OPENAI_API_KEY="<your-key>"
 Then run:
 
 ```powershell
-acbench --scenario tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
 ### Run the built-in local demo bundle
@@ -170,7 +188,7 @@ For local standalone runs, the most important indicators are:
 - `code.success`
 - `code.build_success`
 - `code.test_success`
-- `ops.success` for combined or future ops scenarios
+- `ops.success` for ops-only and combined scenarios
 
 If `status` is `success` and the relevant `code.success` or `ops.success` fields are true, the run succeeded.
 
@@ -197,10 +215,9 @@ Use these when you need more detail:
 
 ## Current Limitations
 
-- There are currently no standalone ops-only scenarios.
-- The benchmark suite is still small.
-- `astronomy_shop` currently has placeholder-style coverage compared with `samplepkg`.
-- The current local demo manifest contains only two scenarios.
+- Local ops scenarios are still synthetic even though they now have dedicated task-bank entries.
+- GitHub-backed scenarios currently run through localized fixture snapshots rather than live repository checkout.
+- The OpenAI batch runner expects a local config file; copy `configs/openai_direct.example.json` or edit `configs/openai_direct.local.json`.
 
 ## Repository Hygiene
 

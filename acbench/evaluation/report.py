@@ -23,16 +23,20 @@ def render_markdown_report(evaluation_results: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Scenario Results")
     lines.append("")
-    lines.append("| Scenario | Status | Build | Test | FAIL_TO_PASS | PASS_TO_PASS |")
-    lines.append("| --- | --- | --- | --- | --- | --- |")
+    lines.append("| Scenario | Mode | Status | Build | Test | Detect | Localize | Repair | FAIL_TO_PASS | PASS_TO_PASS |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
 
     for scenario_id, item in evaluation_results.get("results", {}).items():
         lines.append(
             "| "
             + f"{scenario_id} | "
+            + f"{item.get('mode', '')} | "
             + f"{item.get('status', '')} | "
             + f"{item.get('build_success', False)} | "
             + f"{item.get('test_success', False)} | "
+            + f"{item.get('detected', False)} | "
+            + f"{item.get('localized', False)} | "
+            + f"{item.get('repaired', False)} | "
             + f"{len(item.get('fail_to_pass_success', []))} | "
             + f"{len(item.get('pass_to_pass_success', []))} |"
         )
@@ -43,8 +47,13 @@ def render_markdown_report(evaluation_results: dict[str, Any]) -> str:
     for scenario_id, item in evaluation_results.get("results", {}).items():
         lines.append(f"### `{scenario_id}`")
         lines.append("")
+        lines.append(f"- Mode: `{item.get('mode', '')}`")
         lines.append(f"- Status: `{item.get('status', '')}`")
         lines.append(f"- Code Backend: `{item.get('code_backend', '')}`")
+        lines.append(f"- Ops Backend: `{item.get('ops_backend', '')}`")
+        lines.append(f"- Detected: `{item.get('detected', False)}`")
+        lines.append(f"- Localized: `{item.get('localized', False)}`")
+        lines.append(f"- Repaired: `{item.get('repaired', False)}`")
         lines.append(f"- Result Path: `{item.get('result_path', '')}`")
         lines.append(f"- Summary Path: `{item.get('summary_path', '')}`")
         lines.append(

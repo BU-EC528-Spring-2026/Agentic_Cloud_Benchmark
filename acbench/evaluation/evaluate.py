@@ -1,4 +1,4 @@
-"""Batch patch evaluation utilities for the ACBench prototype."""
+"""Batch evaluation utilities for the ACBench prototype."""
 
 from __future__ import annotations
 
@@ -38,6 +38,26 @@ def _resolve_patch_input(
     return ""
 
 
+def _build_run_config(
+    payload: dict[str, Any],
+    *,
+    patch_path: str,
+) -> RunConfig:
+    """Build one RunConfig from one prediction payload."""
+
+    return RunConfig(
+        dry_run=bool(payload.get("dry_run", False)),
+        code_patch_path=patch_path,
+        aiops_agent_ref=str(payload.get("aiops_agent_ref", "")),
+        code_agent_ref=str(payload.get("code_agent_ref", "")),
+        openai_model=str(payload.get("openai_model", "")),
+        openai_api_key_env=str(payload.get("openai_api_key_env", "OPENAI_API_KEY")),
+        openai_base_url=str(payload.get("openai_base_url", "")),
+        max_steps=int(payload.get("max_steps", 10)),
+        keep_artifacts=bool(payload.get("keep_artifacts", True)),
+    )
+
+
 def evaluate_predictions(
     manifest_path: str | Path,
     predictions_path: str | Path,
@@ -51,6 +71,9 @@ def evaluate_predictions(
 
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
     predictions = json.loads(predictions_file.read_text(encoding="utf-8"))
+    prediction_defaults = predictions.get("_defaults", {})
+    if prediction_defaults and not isinstance(prediction_defaults, dict):
+        raise ValueError("Prediction `_defaults` must be a JSON object when present.")
     runner = ACBenchRunner()
 
     results: dict[str, Any] = {
@@ -70,26 +93,42 @@ def evaluate_predictions(
         if pred is None:
             results["missing"].append(scenario.scenario_id)
             continue
+        if not isinstance(pred, dict):
+            raise ValueError(
+                f"Prediction payload for {scenario.scenario_id} must be a JSON object."
+            )
 
-        patch_path = _resolve_patch_input(scenario_path, pred)
-        run_config = RunConfig(
-            dry_run=False,
-            code_patch_path=patch_path,
-            max_steps=int(pred.get("max_steps", 10)),
+        merged_pred = dict(prediction_defaults)
+        merged_pred.update(pred)
+
+        patch_path = _resolve_patch_input(scenario_path, merged_pred)
+        run_config = _build_run_config(
+            merged_pred,
+            patch_path=patch_path,
         )
         run_result = runner.run(
             scenario_path=scenario_path,
-            dry_run=False,
+            dry_run=run_config.dry_run,
             run_config=run_config,
         )
         code_result = run_result.code_result
+        ops_result = run_result.ops_result
         summary = {
+            "mode": scenario.mode,
             "status": run_result.status,
             "result_path": run_result.artifacts.result_path,
             "summary_path": run_result.artifacts.summary_path,
             "code_backend": code_result.backend if code_result else "",
+            "ops_backend": ops_result.backend if ops_result else "",
             "build_success": code_result.build_success if code_result else False,
             "test_success": code_result.test_success if code_result else False,
+            "detected": ops_result.detected if ops_result else False,
+            "localized": ops_result.localized if ops_result else False,
+            "repaired": (
+                code_result.repaired
+                if code_result
+                else (ops_result.repaired if ops_result else False)
+            ),
             "pass_to_pass_success": code_result.pass_to_pass_success if code_result else [],
             "fail_to_pass_success": code_result.fail_to_pass_success if code_result else [],
             "pass_to_pass_failure": code_result.pass_to_pass_failure if code_result else [],

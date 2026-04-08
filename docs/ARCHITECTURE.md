@@ -44,13 +44,17 @@ The execution path is:
 Current scenario inventory:
 
 - `3` code scenarios
-- `0` ops-only scenarios
-- `1` combined scenario
+- `3` ops-only scenarios
+- `3` combined scenarios
 
 Current service families:
 
-- `samplepkg`
-- `astronomy_shop`
+- `billing_pricing`
+- `feature_router`
+- `maintenance_window`
+- `cache_api`
+- `queue_worker`
+- `payments_api`
 
 ## Result Artifacts
 

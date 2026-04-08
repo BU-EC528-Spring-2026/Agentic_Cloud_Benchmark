@@ -52,9 +52,13 @@ class CodeRunnerTests(unittest.TestCase):
             Path(__file__).resolve().parents[1]
             / "services"
             / "fixtures"
-            / "local_repo_buggy"
+            / "billing_pricing_buggy"
         )
-        patch_path = Path(__file__).resolve().parents[1] / "patches" / "local_repo_buggy_fix.diff"
+        patch_path = (
+            Path(__file__).resolve().parents[1]
+            / "patches"
+            / "billing_pricing_bundle_fix.diff"
+        )
         outcome = run_local_code_request(
             CodeRunRequest(
                 instance=NativeCodeInstance(
@@ -77,7 +81,7 @@ class CodeRunnerTests(unittest.TestCase):
 
         self.assertTrue(outcome.resolved)
         self.assertEqual(len(outcome.fail_to_pass_success), 1)
-        self.assertEqual(len(outcome.pass_to_pass_success), 1)
+        self.assertEqual(len(outcome.pass_to_pass_success), 2)
         self.assertTrue(Path(outcome.logs["build_log_path"]).exists())
         self.assertTrue(Path(outcome.logs["test_log_path"]).exists())
 

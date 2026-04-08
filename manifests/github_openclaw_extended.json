@@ -1,0 +1,26 @@
+{
+  "name": "github-openclaw-extended",
+  "scenarios": [
+    {
+      "scenario": "tasks/scenarios/github/code/openclaw__pairing_state_array_persistence.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/code/openclaw__gpt5_overlay_aggregator_provider.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/code/openclaw__minimax_usage_get_method.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/ops/openclaw__docker_healthcheck_false_unhealthy.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/ops/openclaw__main_lane_failover_too_slow.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/combined/openclaw__listener_outside_active_run_incident.scenario.json"
+    }
+  ]
+}

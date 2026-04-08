@@ -20,9 +20,20 @@ class NativeOpsProblem:
     service: str
     description: str = ""
     deployment: str = "k8s"
+    task_summary: str = ""
+    task_instructions: str = ""
+    acceptance_notes: str = ""
+    issue_text: str = ""
+    error_logs: list[str] = field(default_factory=list)
+    reproduction_steps: list[str] = field(default_factory=list)
+    relevant_files: list[str] = field(default_factory=list)
+    visible_notes: str = ""
     require_detection: bool = False
     require_localization: bool = False
     require_repair: bool = False
+    detection_keywords: list[str] = field(default_factory=list)
+    localization_keywords: list[str] = field(default_factory=list)
+    repair_keywords: list[str] = field(default_factory=list)
 
     @classmethod
     def from_scenario(cls, scenario: ScenarioSpec) -> "NativeOpsProblem":
@@ -37,9 +48,20 @@ class NativeOpsProblem:
             service=scenario.service.service,
             description=scenario.ops_fault.description,
             deployment=scenario.service.deployment,
+            task_summary=scenario.task.summary,
+            task_instructions=scenario.task.instructions,
+            acceptance_notes=scenario.task.acceptance_notes,
+            issue_text=scenario.visible_context.issue_text,
+            error_logs=list(scenario.visible_context.error_logs),
+            reproduction_steps=list(scenario.visible_context.reproduction_steps),
+            relevant_files=list(scenario.visible_context.relevant_files),
+            visible_notes=scenario.visible_context.notes,
             require_detection=scenario.success_criteria.require_detection,
             require_localization=scenario.success_criteria.require_localization,
             require_repair=scenario.success_criteria.require_repair,
+            detection_keywords=list(scenario.ops_fault.detection_keywords),
+            localization_keywords=list(scenario.ops_fault.localization_keywords),
+            repair_keywords=list(scenario.ops_fault.repair_keywords),
         )
 
 
@@ -52,6 +74,9 @@ class OpsRunRequest:
     max_steps: int = 10
     agent_ref: str = ""
     keep_artifacts: bool = True
+    openai_model: str = ""
+    openai_api_key_env: str = "OPENAI_API_KEY"
+    openai_base_url: str = ""
 
 
 @dataclass(slots=True)

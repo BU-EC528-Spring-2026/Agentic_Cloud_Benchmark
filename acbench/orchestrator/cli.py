@@ -64,6 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Live code agent class in `module:Class` format.",
     )
     parser.add_argument(
+        "--aiops-agent-ref",
+        default="",
+        help="Live ops agent class in `module:Class` format.",
+    )
+    parser.add_argument(
         "--code-patch",
         default="",
         help="Optional patch file to apply for local code execution.",
@@ -224,11 +229,12 @@ def main() -> int:
         dry_run=args.dry_run,
         max_steps=args.max_steps,
         code_agent_ref=args.code_agent_ref,
+        aiops_agent_ref=args.aiops_agent_ref,
         code_patch_path=args.code_patch,
         openai_model=args.openai_model,
         openai_api_key_env=args.openai_api_key_env,
         openai_base_url=args.openai_base_url,
-        aiops_agent_type="standalone-local-ops",
+        aiops_agent_type=args.aiops_agent_ref or "standalone-local-ops",
         code_agent_type=args.code_agent_ref or "unconfigured",
     )
     result = runner.run(args.scenario, dry_run=args.dry_run, run_config=run_config)

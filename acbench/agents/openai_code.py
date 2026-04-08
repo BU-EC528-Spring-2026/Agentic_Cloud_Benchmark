@@ -43,6 +43,10 @@ class OpenAICodePatchAgent:
             input=prompt,
         )
         raw_text = getattr(response, "output_text", "") or ""
+        prompt_path = output_dir / "openai_prompt.txt"
+        response_path = output_dir / "openai_response.txt"
+        prompt_path.write_text(prompt, encoding="utf-8")
+        response_path.write_text(raw_text, encoding="utf-8")
         patch_text = self._extract_patch(raw_text)
         patch_text = self._normalize_unified_diff(patch_text)
         validation_error = self._validate_unified_diff(patch_text)
@@ -60,17 +64,14 @@ class OpenAICodePatchAgent:
             )
             repair_text = getattr(repair_response, "output_text", "") or ""
             raw_text = f"{raw_text}\n\n--- PATCH REPAIR ---\n{repair_text}"
+            response_path.write_text(raw_text, encoding="utf-8")
             patch_text = self._extract_patch(repair_text)
             patch_text = self._normalize_unified_diff(patch_text)
             validation_error = self._validate_unified_diff(patch_text)
         if validation_error:
             raise ValueError(f"Model returned an invalid unified diff after retries: {validation_error}")
 
-        prompt_path = output_dir / "openai_prompt.txt"
-        response_path = output_dir / "openai_response.txt"
         patch_path = output_dir / "openai_generated_patch.diff"
-        prompt_path.write_text(prompt, encoding="utf-8")
-        response_path.write_text(raw_text, encoding="utf-8")
         patch_path.write_text(patch_text, encoding="utf-8")
         return {
             "patch_text": patch_text,
@@ -149,8 +150,14 @@ class OpenAICodePatchAgent:
         if "omitted for brevity" in text.lower():
             return "Patch contains placeholder prose."
         lines = text.splitlines()
-        if not any(line.startswith("diff --git ") for line in lines):
-            return "Patch does not contain a diff --git header."
+        has_git_header = any(line.startswith("diff --git ") for line in lines)
+        has_plain_headers = any(line.startswith("--- ") for line in lines) and any(
+            line.startswith("+++ ") for line in lines
+        )
+        if not has_git_header and not has_plain_headers:
+            return "Patch does not contain recognizable diff file headers."
+        if not any(line.startswith("@@") for line in lines):
+            return "Patch does not contain any hunk headers."
 
         i = 0
         while i < len(lines):
@@ -159,10 +166,8 @@ class OpenAICodePatchAgent:
                 i += 1
                 continue
             match = re.match(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@", line)
-            if not match:
-                return f"Invalid hunk header: {line}"
-            old_count = int(match.group(2) or "1")
-            new_count = int(match.group(4) or "1")
+            old_count = int(match.group(2) or "1") if match else None
+            new_count = int(match.group(4) or "1") if match else None
             removed = 0
             added = 0
             i += 1
@@ -187,7 +192,9 @@ class OpenAICodePatchAgent:
                 else:
                     return f"Unsupported diff line: {current}"
                 i += 1
-            if removed != old_count or added != new_count:
+            if old_count is not None and new_count is not None and (
+                removed != old_count or added != new_count
+            ):
                 return (
                     f"Hunk header count mismatch: expected -{old_count} +{new_count}, "
                     f"saw -{removed} +{added}."
@@ -277,11 +284,115 @@ class OpenAICodePatchAgent:
     @staticmethod
     def _extract_patch(response_text: str) -> str:
         text = response_text.strip()
-        if text.startswith("```"):
-            lines = text.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
+        if not text:
+            return ""
+
+        fenced_patch = OpenAICodePatchAgent._extract_fenced_patch(text)
+        if fenced_patch:
+            return fenced_patch
+
+        file_block_patch = OpenAICodePatchAgent._extract_file_block_patch(text)
+        if file_block_patch:
+            return file_block_patch
+
+        lines = text.splitlines()
+        patch_lines: list[str] = []
+        started = False
+        saw_hunk = False
+
+        for index, line in enumerate(lines):
+            if not started and not OpenAICodePatchAgent._is_patch_start(lines, index):
+                continue
+            if not started:
+                started = True
+
+            if OpenAICodePatchAgent._looks_like_patch_line(line):
+                patch_lines.append(line)
+                if line.startswith("@@"):
+                    saw_hunk = True
+                continue
+
+            if saw_hunk and patch_lines:
+                break
+
+        if patch_lines:
+            return "\n".join(patch_lines).strip()
         return text
+
+    @staticmethod
+    def _extract_fenced_patch(text: str) -> str:
+        block_pattern = re.compile(r"```(?:diff|patch)?\s*\n(.*?)```", re.DOTALL)
+        for match in block_pattern.finditer(text):
+            candidate = match.group(1).strip()
+            if candidate and OpenAICodePatchAgent._contains_patch_markers(candidate):
+                return candidate
+        return ""
+
+    @staticmethod
+    def _extract_file_block_patch(text: str) -> str:
+        lines = text.splitlines()
+        patch_lines: list[str] = []
+        found_block = False
+        index = 0
+
+        while index < len(lines):
+            match = re.match(r"^--- FILE:\s+(.+?)\s+---$", lines[index].strip())
+            if not match:
+                index += 1
+                continue
+
+            found_block = True
+            relative_path = match.group(1).strip().replace("\\", "/")
+            patch_lines.append(f"--- a/{relative_path}")
+            patch_lines.append(f"+++ b/{relative_path}")
+            index += 1
+
+            while index < len(lines):
+                current = lines[index]
+                if re.match(r"^--- FILE:\s+(.+?)\s+---$", current.strip()):
+                    break
+                if current.startswith("--- PATCH REPAIR ---"):
+                    break
+                if current.startswith("@@") or current.startswith(("+", "-", " ", "\\ No newline")):
+                    patch_lines.append(current)
+                index += 1
+
+        if not found_block:
+            return ""
+        return "\n".join(patch_lines).strip()
+
+    @staticmethod
+    def _contains_patch_markers(text: str) -> bool:
+        lines = text.splitlines()
+        return any(line.startswith("@@") for line in lines) and (
+            any(line.startswith("diff --git ") for line in lines)
+            or (
+                any(line.startswith("--- ") for line in lines)
+                and any(line.startswith("+++ ") for line in lines)
+            )
+        )
+
+    @staticmethod
+    def _is_patch_start(lines: list[str], index: int) -> bool:
+        line = lines[index]
+        if line.startswith("diff --git "):
+            return True
+        if line.startswith("--- "):
+            return index + 1 < len(lines) and lines[index + 1].startswith("+++ ")
+        return False
+
+    @staticmethod
+    def _looks_like_patch_line(line: str) -> bool:
+        return line.startswith(
+            (
+                "diff --git ",
+                "index ",
+                "--- ",
+                "+++ ",
+                "@@",
+                "+",
+                "-",
+                " ",
+                "\\ No newline at end of file",
+            )
+        )

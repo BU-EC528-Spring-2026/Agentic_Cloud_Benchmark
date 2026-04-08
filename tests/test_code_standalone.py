@@ -139,6 +139,19 @@ class CodeStandaloneTests(unittest.TestCase):
         )
         self.assertEqual(hunks, [(["before"], ["after"])])
 
+    def test_parse_unified_hunks_accepts_semantic_hunk_headers(self) -> None:
+        hunks = parse_unified_hunks(
+            [
+                "--- a/sample.txt",
+                "+++ b/sample.txt",
+                "@@ def example(",
+                "-before",
+                "+after",
+            ],
+            Path("sample.txt"),
+        )
+        self.assertEqual(hunks, [(["before"], ["after"])])
+
     def test_find_subsequence_returns_match_index(self) -> None:
         index = find_subsequence(["a", "b", "c"], ["b", "c"], 0)
         self.assertEqual(index, 1)

@@ -60,6 +60,17 @@ def check_scenario_readiness(scenario: ScenarioSpec) -> ScenarioReadinessReport:
                         message=f"Repository path does not exist: {repo_path}",
                     )
                 )
+        elif scenario.source.type == "github":
+            issues.append(
+                ReadinessIssue(
+                    level="error",
+                    source="scenario",
+                    message=(
+                        "GitHub-backed scenario is pinned correctly but does not yet have "
+                        "a local repository_path materialized for live execution."
+                    ),
+                )
+            )
         else:
             issues.append(
                 ReadinessIssue(
