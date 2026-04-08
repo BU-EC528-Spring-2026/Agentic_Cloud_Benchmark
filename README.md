@@ -5,7 +5,7 @@ Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUl
 
 Demo 3 Link: https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing ; Quiz Link: https://forms.gle/zGEKQNbrwm9oXN4N7 ; Video Link: https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
 
-## What This Agentic Cloud Benchmark (ACBench)
+## What is Agentic Cloud Benchmark (ACBench)
 
 ACBench is a standalone benchmark repository for evaluating an agent's ability to:
 
