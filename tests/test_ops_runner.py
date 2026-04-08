@@ -8,8 +8,12 @@ import json
 from enum import Enum
 from pathlib import Path
 
-from acbench.backends.ops.runner import build_ops_request, run_ops_request, write_ops_artifacts
-from acbench.backends.ops.runtime import NativeOpsProblem
+from acbench.executors.backends.ops.runner import (
+    build_ops_request,
+    run_ops_request,
+    write_ops_artifacts,
+)
+from acbench.executors.backends.ops.runtime import NativeOpsProblem
 
 
 class OpsRunnerTests(unittest.TestCase):

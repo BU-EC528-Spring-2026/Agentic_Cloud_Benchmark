@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.report import (
+from acbench.evaluation.report import (
     render_markdown_report,
     render_run_markdown_report,
     write_markdown_report_from_json,

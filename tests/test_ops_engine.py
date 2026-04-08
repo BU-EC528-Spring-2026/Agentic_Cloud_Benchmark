@@ -6,12 +6,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.backends.ops.engine import (
+from acbench.executors.backends.ops.engine import (
     StandaloneLocalOpsEngine,
     build_default_engine,
     build_engine_for_problem,
 )
-from acbench.backends.ops.runtime import NativeOpsProblem, OpsRunRequest
+from acbench.executors.backends.ops.runtime import NativeOpsProblem, OpsRunRequest
 
 
 class OpsEngineTests(unittest.TestCase):

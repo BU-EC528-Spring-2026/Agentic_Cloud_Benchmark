@@ -15,7 +15,7 @@ from acbench.executors.standalone_code import StandaloneCodeExecutor
 from acbench.models.result import ExecutorResult
 from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
-from acbench.runner import ACBenchRunner
+from acbench.orchestrator.runner import ACBenchRunner
 
 
 class ScenarioModelTests(unittest.TestCase):
@@ -48,7 +48,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "combined"
             / "samplepkg__local_fixture.scenario.json"
@@ -66,7 +66,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "combined"
             / "samplepkg__local_fixture.scenario.json"
@@ -87,7 +87,10 @@ class RunnerTests(unittest.TestCase):
                     "issues": [{"source": "test", "message": "synthetic readiness failure"}],
                 }
 
-        with patch("acbench.runner.check_scenario_readiness", return_value=FakeReadiness()):
+        with patch(
+            "acbench.orchestrator.runner.check_scenario_readiness",
+            return_value=FakeReadiness(),
+        ):
             with self.assertRaises(RuntimeError):
                 runner.run(scenario_path, dry_run=False)
 
@@ -95,7 +98,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "code"
             / "samplepkg__local_repo_buggy.scenario.json"
@@ -134,7 +137,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "code"
             / "samplepkg__local_repo_buggy.scenario.json"
@@ -161,7 +164,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "combined"
             / "samplepkg__local_fixture.scenario.json"
@@ -189,7 +192,7 @@ class RunnerTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "code"
             / "samplepkg__local_repo_buggy.scenario.json"
@@ -206,7 +209,7 @@ class RunnerTests(unittest.TestCase):
             dry_run=False,
             run_config=RunConfig(
                 dry_run=False,
-                code_agent_ref="acbench.tests.test_standalone_code_executor:FakePatchAgent",
+                code_agent_ref="tests.test_standalone_code_executor:FakePatchAgent",
                 openai_model="test-model",
             ),
         )

@@ -12,24 +12,20 @@ dependencies = [
   "openai>=1.0.0",
 ]
 
+[project.scripts]
+acbench = "acbench.orchestrator.cli:main"
+
 [tool.setuptools]
-package-dir = { acbench = "." }
 packages = [
   "acbench",
   "acbench.agents",
-  "acbench.backends",
-  "acbench.backends.code",
-  "acbench.backends.ops",
+  "acbench.evaluation",
   "acbench.executors",
+  "acbench.executors.backends",
+  "acbench.executors.backends.code",
+  "acbench.executors.backends.ops",
   "acbench.models",
-  "acbench.standalone",
-  "acbench.standalone.benchmarks",
-  "acbench.standalone.benchmarks.code",
-  "acbench.standalone.benchmarks.ops",
-  "acbench.standalone.benchmarks.combined",
-  "acbench.standalone.runtimes",
-  "acbench.standalone.runtimes.code",
-  "acbench.standalone.runtimes.ops",
-  "acbench.standalone.runtimes.combined",
-  "acbench.standalone.services",
+  "acbench.orchestrator",
+  "acbench.services",
+  "acbench.tasks",
 ]

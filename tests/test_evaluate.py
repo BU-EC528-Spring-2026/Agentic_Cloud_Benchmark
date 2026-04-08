@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.evaluate import evaluate_predictions
+from acbench.evaluation.evaluate import evaluate_predictions
 
 
 class EvaluateTests(unittest.TestCase):

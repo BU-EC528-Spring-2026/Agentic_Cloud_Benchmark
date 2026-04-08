@@ -61,7 +61,12 @@ class LocalCodeExecutorTests(unittest.TestCase):
         self.assertTrue(Path(result.logs["test_log_path"]).exists())
 
     def test_local_executor_applies_patch_file(self) -> None:
-        fixture_repo = Path(__file__).resolve().parents[1] / "fixtures" / "local_repo_buggy"
+        fixture_repo = (
+            Path(__file__).resolve().parents[1]
+            / "services"
+            / "fixtures"
+            / "local_repo_buggy"
+        )
         scenario = ScenarioSpec.from_dict(
             {
                 "scenario_id": "local-code-patch",

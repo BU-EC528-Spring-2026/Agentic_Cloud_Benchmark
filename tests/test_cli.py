@@ -7,7 +7,7 @@ import json
 import unittest
 from contextlib import redirect_stdout
 
-from acbench.cli import run_doctor
+from acbench.orchestrator.cli import run_doctor
 
 
 class CLITests(unittest.TestCase):

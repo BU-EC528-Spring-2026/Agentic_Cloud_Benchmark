@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from acbench.models.runtime import RunConfig
-from acbench.runner import ACBenchRunner
+from acbench.orchestrator.runner import ACBenchRunner
 
 
 class CombinedLocalTests(unittest.TestCase):
@@ -22,7 +22,7 @@ class CombinedLocalTests(unittest.TestCase):
         runner = ACBenchRunner(root_dir=self.temp_dir)
         scenario_path = (
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "combined"
             / "samplepkg__local_fixture.scenario.json"

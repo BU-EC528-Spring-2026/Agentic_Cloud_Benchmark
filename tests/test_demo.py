@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.demo import run_local_demo
+from acbench.orchestrator.demo import run_local_demo
 
 
 class DemoTests(unittest.TestCase):

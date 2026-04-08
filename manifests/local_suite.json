@@ -2,10 +2,10 @@
   "name": "acbench-local-suite",
   "scenarios": [
     {
-      "scenario": "standalone/scenarios/code/samplepkg__local_repo_buggy.scenario.json"
+      "scenario": "tasks/scenarios/code/samplepkg__local_repo_buggy.scenario.json"
     },
     {
-      "scenario": "standalone/scenarios/combined/samplepkg__local_fixture.scenario.json"
+      "scenario": "tasks/scenarios/combined/samplepkg__local_fixture.scenario.json"
     }
   ]
 }

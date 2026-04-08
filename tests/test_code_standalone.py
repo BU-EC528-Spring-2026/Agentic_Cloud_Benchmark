@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from acbench.backends.code.standalone import (
+from acbench.executors.backends.code.standalone import (
     apply_patch_without_git,
     capture_git_diff,
     find_subsequence,
@@ -44,9 +44,9 @@ class CodeStandaloneTests(unittest.TestCase):
         self.assertIn("ok", output)
 
     def test_normalize_command_wraps_python_for_windows_powershell(self) -> None:
-        with mock.patch("acbench.backends.code.standalone.os.name", "nt"):
+        with mock.patch("acbench.executors.backends.code.standalone.os.name", "nt"):
             with mock.patch(
-                "acbench.backends.code.standalone.sys.executable",
+                "acbench.executors.backends.code.standalone.sys.executable",
                 r"C:\Projects\Agentic Cloud Benchmark\.venv\Scripts\python.exe",
             ):
                 normalized, env_overrides = normalize_command(
@@ -61,9 +61,9 @@ class CodeStandaloneTests(unittest.TestCase):
         self.assertEqual(env_overrides, {})
 
     def test_normalize_command_preserves_non_windows_behavior(self) -> None:
-        with mock.patch("acbench.backends.code.standalone.os.name", "posix"):
+        with mock.patch("acbench.executors.backends.code.standalone.os.name", "posix"):
             with mock.patch(
-                "acbench.backends.code.standalone.sys.executable",
+                "acbench.executors.backends.code.standalone.sys.executable",
                 "/tmp/venv/bin/python3",
             ):
                 normalized, env_overrides = normalize_command(

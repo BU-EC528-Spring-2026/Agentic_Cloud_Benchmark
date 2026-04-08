@@ -7,7 +7,11 @@ import unittest
 from enum import Enum
 from pathlib import Path
 
-from acbench.backends.ops.runtime import NativeOpsProblem, OpsRunOutcome, OpsRunRequest
+from acbench.executors.backends.ops.runtime import (
+    NativeOpsProblem,
+    OpsRunOutcome,
+    OpsRunRequest,
+)
 from acbench.models.scenario import ScenarioSpec
 
 

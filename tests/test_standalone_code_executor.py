@@ -36,7 +36,7 @@ class StandaloneCodeExecutorTests(unittest.TestCase):
     def test_executor_can_use_agent_generated_patch(self) -> None:
         scenario = ScenarioSpec.from_file(
             Path(__file__).resolve().parents[1]
-            / "standalone"
+            / "tasks"
             / "scenarios"
             / "code"
             / "samplepkg__local_repo_buggy.scenario.json"
@@ -47,7 +47,7 @@ class StandaloneCodeExecutorTests(unittest.TestCase):
             scenario=scenario,
             run_dir=self.temp_dir / "run",
             run_config=RunConfig(
-                code_agent_ref="acbench.tests.test_standalone_code_executor:FakePatchAgent",
+                code_agent_ref="tests.test_standalone_code_executor:FakePatchAgent",
                 openai_model="test-model",
             ),
         )
