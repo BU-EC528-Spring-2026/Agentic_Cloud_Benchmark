@@ -12,4 +12,9 @@ Current service families:
 - `payments_api/`
 - `openclaw/`
 
-Local fixture repositories now live under `services/fixtures/`.
+Local and GitHub-derived fixture repositories live under `services/fixtures/`.
+
+At the moment:
+
+- local service families back the local task bank
+- `openclaw/` backs the GitHub-derived task bank

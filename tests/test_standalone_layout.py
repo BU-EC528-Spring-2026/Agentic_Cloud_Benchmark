@@ -23,8 +23,11 @@ class StandaloneLayoutTests(unittest.TestCase):
             "tasks/scenarios/local/combined/feature_router__rollout_guard_incident.scenario.json",
             "tasks/scenarios/local/combined/maintenance_window__midnight_skip_incident.scenario.json",
             "tasks/scenarios/github/code/openclaw__pairing_state_array_persistence.scenario.json",
+            "tasks/scenarios/github/code/openclaw__no_reply_prefix_leak.scenario.json",
             "tasks/scenarios/github/ops/openclaw__docker_healthcheck_false_unhealthy.scenario.json",
+            "tasks/scenarios/github/ops/openclaw__mcp_tool_hard_timeout.scenario.json",
             "tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json",
+            "tasks/scenarios/github/combined/openclaw__discord_slash_done_incident.scenario.json",
         ):
             scenario = ScenarioSpec.from_file(root / relative_path)
             self.assertTrue(scenario.scenario_id)

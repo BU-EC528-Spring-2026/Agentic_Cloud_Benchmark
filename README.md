@@ -1,231 +1,157 @@
 # ACBench
-Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
 
-Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 ; Video Link: https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
-
-Demo 3 Link: https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing ; Quiz Link: https://forms.gle/zGEKQNbrwm9oXN4N7 ; Video Link: https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
-
-## What is Agentic Cloud Benchmark (ACBench)
-
-ACBench is a standalone benchmark repository for evaluating an agent's ability to:
+ACBench is a standalone benchmark for evaluating whether an agent can:
 
 - repair code in a local repository fixture
-- handle ops-style incident tasks in a local runtime
-- solve combined tasks that require both code repair and ops reasoning
+- analyze ops-style incidents
+- solve combined tasks that require both ops reasoning and code repair
 
-This repository is standalone-only. It does not depend on sibling repositories such as AIOpsLab or SWE-bench-Live.
+## Current Scope
 
-## What This Repo Contains
+The repo currently contains:
 
-Today the repo includes:
-
-- `12` standalone scenarios total
+- `54` scenarios total
 - `9` local scenarios
-- `3` GitHub-backed smoke scenarios
-- `4` code scenarios
-- `4` ops-only scenarios
-- `4` combined scenarios
-- `7` service families
+- `45` GitHub-derived scenarios
+- `18` code-only scenarios
+- `18` ops-only scenarios
+- `18` combined scenarios
 
-Current scenarios:
+Task banks:
 
-- Local scenarios now live under `tasks/scenarios/local/{code,ops,combined}/`
-- GitHub-backed scenarios now live under `tasks/scenarios/github/{code,ops,combined}/`
-- The first GitHub smoke set is:
-  - `openclaw__pairing_state_array_persistence.scenario.json`
-  - `openclaw__docker_healthcheck_false_unhealthy.scenario.json`
-  - `openclaw__completion_process_leak_incident.scenario.json`
+- local scenarios: `tasks/scenarios/local/{code,ops,combined}/`
+- GitHub-derived scenarios: `tasks/scenarios/github/{code,ops,combined}/`
 
-Current services:
-
-- [`billing_pricing`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/billing_pricing)
-- [`feature_router`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/feature_router)
-- [`maintenance_window`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/maintenance_window)
-- [`cache_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/cache_api)
-- [`queue_worker`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/queue_worker)
-- [`payments_api`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/payments_api)
-- [`openclaw`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services/catalog/openclaw)
+The current GitHub task bank is built from localized reproductions of
+`openclaw/openclaw` issues.
 
 ## Repository Layout
 
-Main directories:
-
-- [`acbench/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench): core Python package
-- [`acbench/orchestrator/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator): CLI, run flow, readiness, and demo/export entrypoints
-- [`tasks/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/tasks): canonical benchmark task definitions
-- [`acbench/agents/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/agents): OpenAI-backed and scripted agents
-- [`acbench/executors/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/executors): concrete code and ops execution paths
-- [`services/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/services): service docs and local fixture repositories
-- [`acbench/evaluation/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation): batch scoring and report generation
-- [`acbench/models/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/models): shared runtime, scenario, and result schemas
-- [`patches/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/patches): reference patches
-- [`predictions/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/predictions): batch evaluation inputs
-- [`manifests/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/manifests): batch scenario lists
-- [`runs/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runs): per-run outputs
-- [`docs/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs): supporting docs
-
-Important code files:
-
-- [`acbench/__init__.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/__init__.py): package root
-- [`acbench/paths.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/paths.py): shared repository path helpers
-- [`acbench/orchestrator/runner.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator/runner.py): canonical benchmark orchestration
-- [`acbench/orchestrator/cli.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/orchestrator/cli.py): canonical CLI implementation
-- [`acbench/evaluation/evaluate.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation/evaluate.py): manifest/prediction evaluation helpers
-- [`acbench/evaluation/report.py`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/acbench/evaluation/report.py): markdown reporting helpers
+- `acbench/`: core runtime package
+- `acbench/orchestrator/`: CLI, runner, readiness checks
+- `acbench/agents/`: code and ops agents
+- `acbench/executors/`: code and ops execution paths
+- `acbench/evaluation/`: evaluation and report helpers
+- `acbench/models/`: shared scenario, runtime, and result schemas
+- `tasks/`: scenario definitions
+- `services/`: service docs and fixture repositories
+- `patches/`: gold/reference patches
+- `predictions/`: batch evaluation inputs
+- `manifests/`: scenario bundles
+- `runs/`: generated outputs
+- `docs/`: supporting docs
 
 ## Quick Start
 
-Everything below assumes you are in:
-
-```powershell
-C:\Projects\ACBench\Agentic_Cloud_Benchmark
-```
-
-### 1. Create and activate a virtual environment
-
-PowerShell:
-
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-Linux / macOS:
+From the repository root:
 
 ```bash
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-```
-
-### 2. Install the repo
-
-```powershell
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-### 3. Check the environment
+Check the environment:
 
-```powershell
+```bash
 acbench --doctor
 ```
 
-### 4. Validate a scenario
+Validate a scenario:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
-### 5. Run the local batch demo
+## Common Runs
 
-```powershell
-acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
-```
+Run one local code scenario with a gold patch:
 
-That manifest currently evaluates all `9` local scenarios across code-only, ops-only, and combined modes.
-
-GitHub-backed smoke evaluation:
-
-```powershell
-acbench --manifest manifests/github_openclaw_smoke.json --predictions predictions/github_openclaw_gold.json --evaluation-output runs/github_openclaw_smoke_eval.json
-```
-
-Run both local and GitHub manifests with the OpenAI patch agent:
-
-```powershell
-python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
-```
-
-## Common Workflows
-
-### Run one code scenario with a reference patch
-
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
-### Run one combined scenario with a reference patch
+Run one local code scenario with the OpenAI patch agent:
 
-```powershell
-acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
+```bash
+export OPENAI_API_KEY="<your-key>"
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-### Run a code scenario with an OpenAI-backed patch agent
+Run one local combined scenario with both agents:
 
-Set your API key first:
-
-```powershell
-$env:OPENAI_API_KEY="<your-key>"
+```bash
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-Then run:
+Run one GitHub-derived combined scenario with both agents:
 
-```powershell
-acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+```bash
+acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-### Run the built-in local demo bundle
+Run the full local gold suite:
 
-```powershell
-acbench --run-local-demo demo_out
+```bash
+acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
-## How Results Are Written
+Run the full GitHub/OpenClaw gold suite:
 
-Each run creates a timestamped directory under [`runs/`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/runs).
+```bash
+acbench --manifest manifests/github_openclaw_extended.json --predictions predictions/github_openclaw_extended_gold.json --evaluation-output runs/github_openclaw_extended_gold_eval.json
+```
 
-The most important files are:
+Run the default local + GitHub agent batches from config:
 
-- `result.json`: full structured output
-- `summary.json`: compact result summary
-- `diagnostics.json`: environment and backend diagnostics
+```bash
+python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
 
-Some runs may also include:
+## Result Files
+
+Each run creates a timestamped directory under `runs/`.
+
+The main files are:
+
+- `result.json`: full structured result
+- `summary.json`: compact summary
+- `diagnostics.json`: run metadata and diagnostics
+
+Code runs may also include:
 
 - `openai_generated_patch.diff`
 - `build.log`
 - `test.log`
 
-## How To Read Success
+Ops runs may also include:
 
-For local standalone runs, the most important indicators are:
+- `ops_eval/openai_ops_prompt.txt`
+- `ops_eval/openai_ops_response.txt`
+- `ops_eval/openai_ops_assessment.json`
 
-- top-level `status`
-- `code.success`
-- `code.build_success`
-- `code.test_success`
-- `ops.success` for ops-only and combined scenarios
+## What Is Already Validated
 
-If `status` is `success` and the relevant `code.success` or `ops.success` fields are true, the run succeeded.
+This repo has already been exercised successfully across:
 
-## Running Tests
+- local patch execution
+- local code-agent execution
+- local combined-agent execution
+- GitHub-derived code-agent execution
+- GitHub-derived combined-agent execution
 
-Run the current standalone regression suite:
+## Documentation
 
-```powershell
-python -m unittest tests.test_standalone_layout tests.test_evaluate tests.test_runner tests.test_cli tests.test_combined_local tests.test_standalone_code_executor tests.test_ops_engine tests.test_ops_runtime tests.test_ops_runner tests.test_result_model -v
-```
+- `docs/QUICKSTART.md`
+- `docs/COMMANDS.md`
+- `docs/SCENARIO_AUTHORING.md`
+- `docs/TASK_BANK_REQUIREMENTS.md`
+- `docs/ARCHITECTURE.md`
 
-## Documentation Map
+## Notes
 
-Start here first:
-
-- [`README.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/README.md)
-
-Use these when you need more detail:
-
-- [`docs/QUICKSTART.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/QUICKSTART.md)
-- [`docs/COMMANDS.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/COMMANDS.md)
-- [`docs/SCENARIO_AUTHORING.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/SCENARIO_AUTHORING.md)
-- [`docs/ARCHITECTURE.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/ARCHITECTURE.md)
-
-## Current Limitations
-
-- Local ops scenarios are still synthetic even though they now have dedicated task-bank entries.
-- GitHub-backed scenarios currently run through localized fixture snapshots rather than live repository checkout.
-- The OpenAI batch runner expects a local config file; copy `configs/openai_direct.example.json` or edit `configs/openai_direct.local.json`.
-
-## Repository Hygiene
-
-Generated outputs such as `runs/`, `out/`, `demo_out/`, `tmp/`, `.hf_cache/`, and `__pycache__/` should not be committed.
+- local ops scenarios are rubric-graded incident tasks
+- GitHub-derived scenarios currently run on localized fixture reproductions, not live repository checkout
+- local config files such as `configs/*.local.json` are ignored by git

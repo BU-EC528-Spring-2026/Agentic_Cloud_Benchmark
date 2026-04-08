@@ -2,73 +2,98 @@
 
 All commands assume:
 
-- you are in `C:\Projects\ACBench\Agentic_Cloud_Benchmark`
-- the virtual environment is activated
+- you are in the repository root
+- your virtual environment is activated
 
 ## Environment
 
-```powershell
+```bash
 acbench --doctor
 acbench --write-readiness-report runs/readiness_report.json
 ```
 
 ## Scenario Validation
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --check-readiness
 ```
 
 ## Single-Scenario Execution
 
-Code-only with a patch:
+Local code with a patch:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
-Combined with a patch:
+Local combined with a patch:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
+```
+
+Local code with an OpenAI code agent:
+
+```bash
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+Local combined with both OpenAI agents:
+
+```bash
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+GitHub-derived code with an OpenAI code agent:
+
+```bash
+acbench --scenario tasks/scenarios/github/code/openclaw__pairing_state_array_persistence.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+GitHub-derived combined with both OpenAI agents:
+
+```bash
+acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
 Ops-only validation:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/ops/cache_api__stale_index_alert.scenario.json --validate-scenario
-```
-
-Code-only with an OpenAI agent:
-
-```powershell
-acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
 ```
 
 Dry run:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --dry-run
 ```
 
 ## Batch Evaluation
 
-```powershell
+Full local gold suite:
+
+```bash
 acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
-acbench --manifest manifests/github_openclaw_smoke.json --predictions predictions/github_openclaw_gold.json --evaluation-output runs/github_openclaw_smoke_eval.json
+```
+
+Full GitHub/OpenClaw gold suite:
+
+```bash
+acbench --manifest manifests/github_openclaw_extended.json --predictions predictions/github_openclaw_extended_gold.json --evaluation-output runs/github_openclaw_extended_gold_eval.json
 ```
 
 ## OpenAI Agent Batch Runs
 
 Edit `configs/openai_direct.local.json`, then run:
 
-```powershell
+```bash
 python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
 ```
 
 ## Export
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --export-code-instance out/code_only_billing_pricing_bundle_threshold.instance.json
 ```
 
@@ -76,18 +101,18 @@ acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_t
 
 From an evaluation JSON:
 
-```powershell
+```bash
 acbench --evaluation-json runs/local_suite_eval.json --write-markdown-report runs/local_suite_eval.md
 ```
 
 From one run directory:
 
-```powershell
+```bash
 acbench --run-dir runs/code_only_billing_pricing_bundle_threshold-YYYYMMDD-HHMMSS-XXXXXX --write-run-markdown-report runs/code_only_billing_pricing_bundle_threshold_report.md
 ```
 
 ## Demo
 
-```powershell
+```bash
 acbench --run-local-demo demo_out
 ```

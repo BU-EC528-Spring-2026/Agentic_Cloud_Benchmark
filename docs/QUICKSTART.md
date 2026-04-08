@@ -1,23 +1,29 @@
 # Quickstart
 
-This guide is for someone who has never used the repo before.
+This guide is for someone using the repo for the first time.
 
-## Goal
+## What You Can Do Here
 
-By the end of this guide you will be able to:
+With the current repo, you can:
 
-- install the repo
-- validate a scenario
-- run the local demo suite
-- inspect the generated result files
+- validate scenarios
+- run local gold evaluations
+- run GitHub-derived gold evaluations
+- run local and GitHub scenarios with real OpenAI-backed agents
+
+Current scope:
+
+- `9` local scenarios
+- `45` GitHub-derived scenarios
+- `54` scenarios total
 
 ## Setup
 
 From the repository root:
 
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install -e .
@@ -25,55 +31,98 @@ python -m pip install -e .
 
 Check that the CLI is available:
 
-```powershell
+```bash
 acbench --doctor
 ```
 
 ## First Safe Command
 
-Validate a scenario without running it:
+Validate one scenario without running it:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
-## First Real Run
+## First Gold Run
 
-Run the built-in local evaluation bundle:
+Run the full local gold suite:
 
-```powershell
+```bash
 acbench --manifest manifests/local_suite.json --predictions predictions/local_gold.json --evaluation-output runs/local_suite_eval.json
 ```
 
-Expected behavior:
+Run the GitHub/OpenClaw gold suite:
 
-- the command writes a batch result JSON
-- nine run directories are created under `runs/`
-- each run directory includes `result.json` and `summary.json`
+```bash
+acbench --manifest manifests/github_openclaw_extended.json --predictions predictions/github_openclaw_extended_gold.json --evaluation-output runs/github_openclaw_extended_gold_eval.json
+```
 
-## Run A Single Scenario
+## First Manual Runs
 
-Code-only:
+Local code scenario with a gold patch:
 
-```powershell
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
-Combined:
+Local code scenario with an OpenAI code agent:
 
-```powershell
-acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
+```bash
+export OPENAI_API_KEY="<your-key>"
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-## Optional: Run With An OpenAI Agent
+Local combined scenario with both agents:
 
-```powershell
-$env:OPENAI_API_KEY="<your-key>"
-acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini
+```bash
+acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-## Where To Look Next
+GitHub-derived combined scenario with both agents:
 
-- See [`COMMANDS.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/COMMANDS.md) for a compact command reference.
-- See [`SCENARIO_AUTHORING.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/SCENARIO_AUTHORING.md) if you want to add tasks.
-- See [`ARCHITECTURE.md`](c:/Projects/ACBench/Agentic_Cloud_Benchmark/docs/ARCHITECTURE.md) if you want the code structure.
+```bash
+acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
+```
+
+## Batch Agent Run
+
+Edit `configs/openai_direct.local.json`, then run:
+
+```bash
+python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
+
+That default config currently runs:
+
+- the full local suite
+- the GitHub/OpenClaw extended suite
+
+## Where Results Go
+
+Each run writes a timestamped directory under `runs/`.
+
+The most important files are:
+
+- `result.json`
+- `summary.json`
+- `diagnostics.json`
+
+Code runs may also write:
+
+- `openai_generated_patch.diff`
+- `build.log`
+- `test.log`
+
+Ops runs may also write:
+
+- `ops_eval/openai_ops_prompt.txt`
+- `ops_eval/openai_ops_response.txt`
+- `ops_eval/openai_ops_assessment.json`
+
+## Read Next
+
+- `README.md`
+- `docs/COMMANDS.md`
+- `docs/SCENARIO_AUTHORING.md`
+- `docs/TASK_BANK_REQUIREMENTS.md`
+- `docs/ARCHITECTURE.md`
