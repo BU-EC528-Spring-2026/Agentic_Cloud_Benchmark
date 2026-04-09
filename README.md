@@ -1,5 +1,11 @@
 # ACBench
 
+Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
+
+Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 ; Video Link: https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
+
+Demo 3 Link: [https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing](https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing) ; Quiz Link: https://forms.gle/zGEKQNbrwm9oXN4N7 ; Video Link: https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
+
 ACBench is a standalone benchmark for evaluating whether an agent can:
 
 - repair code in a local repository fixture
