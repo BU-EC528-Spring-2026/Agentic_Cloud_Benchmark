@@ -80,6 +80,12 @@ export ANTHROPIC_API_KEY="<your-key>"
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
+The same run through the generic agent profile entrypoint:
+
+```bash
+acbench --agent-config configs/agents/claude_sonnet.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
 Local combined scenario with both agents:
 
 ```bash
@@ -111,6 +117,12 @@ For Claude, start from the example config and run:
 ```bash
 cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
 python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
+```
+
+Or use the provider-agnostic batch runner:
+
+```bash
+python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
 ```
 
 That default config currently runs:

@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 import json
 
+from acbench.agents.profile import load_and_resolve_agent_profile
 from acbench.executors.base import BenchmarkExecutor
 from acbench.executors.local_code import LocalCodeExecutor
 from acbench.executors.standalone_code import StandaloneCodeExecutor
@@ -317,6 +318,46 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(Path(result.code_result.details["code_patch_path"]).exists())
         self.assertEqual(result.code_result.metrics["agent_answer_count"], 1)
         self.assertIn("agent_telemetry", result.code_result.details)
+
+    def test_runner_can_use_generic_agent_profile(self) -> None:
+        runner = ACBenchRunner(root_dir=self.temp_dir)
+        scenario_path = (
+            Path(__file__).resolve().parents[1]
+            / "tasks"
+            / "scenarios"
+            / "local"
+            / "code"
+            / "billing_pricing__bundle_discount_threshold.scenario.json"
+        )
+        profile_path = self.temp_dir / "fake_agent_profile.json"
+        profile_path.write_text(
+            json.dumps(
+                {
+                    "name": "fake-code-agent",
+                    "code": {
+                        "provider": "custom",
+                        "agent_ref": "tests.test_standalone_code_executor:FakePatchAgent",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        resolved = load_and_resolve_agent_profile(profile_path)
+
+        result = runner.run(
+            scenario_path,
+            dry_run=False,
+            run_config=RunConfig(
+                dry_run=False,
+                code_agent_ref=resolved["code_agent_ref"],
+                agent_config_path=resolved["agent_config_path"],
+                agent_profile_name=resolved["agent_profile_name"],
+                code_agent_config=resolved["code_agent_config"],
+            ),
+        )
+
+        self.assertTrue(result.code_result.success)
+        self.assertEqual(result.code_result.metrics["agent_answer_count"], 1)
 
 
 if __name__ == "__main__":

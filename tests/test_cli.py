@@ -56,6 +56,19 @@ class CLITests(unittest.TestCase):
         self.assertEqual(args.anthropic_model, "claude-sonnet-4-20250514")
         self.assertEqual(args.anthropic_api_key_env, "ANTHROPIC_API_KEY")
 
+    def test_parser_accepts_agent_config(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "--scenario",
+                "tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json",
+                "--agent-config",
+                "configs/agents/claude_sonnet.example.json",
+            ]
+        )
+
+        self.assertEqual(args.agent_config, "configs/agents/claude_sonnet.example.json")
+
 
 if __name__ == "__main__":
     unittest.main()

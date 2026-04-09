@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(slots=True)
@@ -16,6 +17,10 @@ class RunConfig:
     code_agent_type: str = "unconfigured"
     aiops_agent_ref: str = ""
     code_agent_ref: str = ""
+    agent_config_path: str = ""
+    agent_profile_name: str = ""
+    code_agent_config: dict[str, Any] = field(default_factory=dict)
+    ops_agent_config: dict[str, Any] = field(default_factory=dict)
     code_patch_path: str = ""
     openai_model: str = ""
     openai_api_key_env: str = "OPENAI_API_KEY"

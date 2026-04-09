@@ -27,25 +27,35 @@ class OpenAICodePatchAgent:
         *,
         output_dir: Path,
     ) -> dict[str, str]:
-        api_key = os.environ.get(run_config.openai_api_key_env or "OPENAI_API_KEY", "")
+        section = dict(run_config.code_agent_config or {})
+        model = str(section.get("model", run_config.openai_model)).strip()
+        api_key_env = str(
+            section.get(
+                "api_key_env",
+                run_config.openai_api_key_env or "OPENAI_API_KEY",
+            )
+        ).strip()
+        base_url = str(section.get("base_url", run_config.openai_base_url or "")).strip()
+
+        api_key = os.environ.get(api_key_env or "OPENAI_API_KEY", "")
         if not api_key:
             raise ValueError(
-                f"Environment variable `{run_config.openai_api_key_env}` is not set."
+                f"Environment variable `{api_key_env}` is not set."
             )
-        if not run_config.openai_model:
+        if not model:
             raise ValueError("RunConfig.openai_model is required for OpenAICodePatchAgent.")
 
         prompt = self._build_prompt(scenario)
         client = OpenAI(
             api_key=api_key,
-            base_url=run_config.openai_base_url or None,
+            base_url=base_url or None,
         )
         started = perf_counter()
         call_records: list[dict[str, Any]] = []
         response, call_record = timed_call(
             "initial_answer",
             client.responses.create,
-            model=run_config.openai_model,
+            model=model,
             input=prompt,
         )
         call_records.append(call_record)
@@ -69,7 +79,7 @@ class OpenAICodePatchAgent:
             repair_response, call_record = timed_call(
                 f"repair_answer_{len(call_records)}",
                 client.responses.create,
-                model=run_config.openai_model,
+                model=model,
                 input=repair_prompt,
             )
             call_records.append(call_record)

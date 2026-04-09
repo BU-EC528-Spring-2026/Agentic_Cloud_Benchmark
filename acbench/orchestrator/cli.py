@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from acbench.evaluation.evaluate import evaluate_predictions
+from acbench.agents.profile import load_and_resolve_agent_profile
 from acbench.evaluation.report import (
     write_markdown_report_from_json,
     write_run_markdown_report,
@@ -57,6 +58,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-readiness",
         action="store_true",
         help="Check whether the scenario is runnable in the current environment.",
+    )
+    parser.add_argument(
+        "--agent-config",
+        default="",
+        help="Path to a generic agent profile JSON.",
     )
     parser.add_argument(
         "--code-agent-ref",
@@ -245,11 +251,18 @@ def main() -> int:
         report = check_scenario_readiness(scenario)
         print(json.dumps(report.to_dict(), indent=2))
         return 0
+    agent_profile = (
+        load_and_resolve_agent_profile(args.agent_config) if args.agent_config else {}
+    )
     run_config = RunConfig(
         dry_run=args.dry_run,
         max_steps=args.max_steps,
-        code_agent_ref=args.code_agent_ref,
-        aiops_agent_ref=args.aiops_agent_ref,
+        code_agent_ref=args.code_agent_ref or str(agent_profile.get("code_agent_ref", "")),
+        aiops_agent_ref=args.aiops_agent_ref or str(agent_profile.get("aiops_agent_ref", "")),
+        agent_config_path=str(agent_profile.get("agent_config_path", "")),
+        agent_profile_name=str(agent_profile.get("agent_profile_name", "")),
+        code_agent_config=dict(agent_profile.get("code_agent_config", {})),
+        ops_agent_config=dict(agent_profile.get("ops_agent_config", {})),
         code_patch_path=args.code_patch,
         openai_model=args.openai_model,
         openai_api_key_env=args.openai_api_key_env,
@@ -261,6 +274,24 @@ def main() -> int:
         aiops_agent_type=args.aiops_agent_ref or "standalone-local-ops",
         code_agent_type=args.code_agent_ref or "unconfigured",
     )
+    for section in (run_config.code_agent_config, run_config.ops_agent_config):
+        provider = str(section.get("provider", "")).strip().lower()
+        if provider == "openai":
+            if args.openai_model:
+                section["model"] = args.openai_model
+            if args.openai_api_key_env:
+                section["api_key_env"] = args.openai_api_key_env
+            if args.openai_base_url:
+                section["base_url"] = args.openai_base_url
+        if provider == "anthropic":
+            if args.anthropic_model:
+                section["model"] = args.anthropic_model
+            if args.anthropic_api_key_env:
+                section["api_key_env"] = args.anthropic_api_key_env
+            if args.anthropic_base_url:
+                section["base_url"] = args.anthropic_base_url
+            if args.anthropic_version:
+                section["version"] = args.anthropic_version
     result = runner.run(args.scenario, dry_run=args.dry_run, run_config=run_config)
     print(json.dumps(result.to_dict(), indent=2))
     return 0

@@ -37,21 +37,42 @@ class AnthropicOpsAgent:
         **_: Any,
     ) -> None:
         if run_config is not None:
-            anthropic_model = getattr(run_config, "anthropic_model", anthropic_model)
-            anthropic_api_key_env = getattr(
-                run_config,
-                "anthropic_api_key_env",
-                anthropic_api_key_env,
+            section = dict(getattr(run_config, "ops_agent_config", {}) or {})
+            anthropic_model = str(
+                section.get(
+                    "model",
+                    getattr(run_config, "anthropic_model", anthropic_model),
+                )
             )
-            anthropic_base_url = getattr(
-                run_config,
-                "anthropic_base_url",
-                anthropic_base_url,
+            anthropic_api_key_env = str(
+                section.get(
+                    "api_key_env",
+                    getattr(
+                        run_config,
+                        "anthropic_api_key_env",
+                        anthropic_api_key_env,
+                    ),
+                )
             )
-            anthropic_version = getattr(
-                run_config,
-                "anthropic_version",
-                anthropic_version,
+            anthropic_base_url = str(
+                section.get(
+                    "base_url",
+                    getattr(
+                        run_config,
+                        "anthropic_base_url",
+                        anthropic_base_url,
+                    ),
+                )
+            )
+            anthropic_version = str(
+                section.get(
+                    "version",
+                    getattr(
+                        run_config,
+                        "anthropic_version",
+                        anthropic_version,
+                    ),
+                )
             )
 
         self.model = anthropic_model

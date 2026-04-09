@@ -74,6 +74,7 @@ class OpsRunRequest:
     max_steps: int = 10
     agent_ref: str = ""
     keep_artifacts: bool = True
+    ops_agent_config: dict[str, object] = field(default_factory=dict)
     openai_model: str = ""
     openai_api_key_env: str = "OPENAI_API_KEY"
     openai_base_url: str = ""

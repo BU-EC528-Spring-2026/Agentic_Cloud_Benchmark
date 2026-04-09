@@ -45,6 +45,12 @@ Local code with a Claude code agent:
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
+Local code through the generic agent profile entrypoint:
+
+```bash
+acbench --agent-config configs/agents/claude_sonnet.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
 Local combined with both OpenAI agents:
 
 ```bash
@@ -116,6 +122,15 @@ Copy the example config, fill the key, then run:
 ```bash
 cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
 python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
+```
+
+## Generic Agent Batch Runs
+
+Use one provider-agnostic agent profile:
+
+```bash
+python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
+python scripts/run_agent_evals.py --agent-config configs/agents/openai_gpt41mini.example.json
 ```
 
 ## Export

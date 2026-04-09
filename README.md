@@ -130,6 +130,18 @@ cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
 python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
 ```
 
+Run one scenario through the generic agent profile entrypoint:
+
+```bash
+acbench --agent-config configs/agents/claude_sonnet.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
+Run the full local + GitHub suites through the generic batch runner:
+
+```bash
+python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
+```
+
 ## Result Files
 
 Each run creates a timestamped directory under `runs/`.

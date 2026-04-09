@@ -94,10 +94,16 @@ class ACBenchRunner:
             "code_agent_type": run_config.code_agent_type,
             "aiops_agent_ref": run_config.aiops_agent_ref,
             "code_agent_ref": run_config.code_agent_ref,
+            "agent_config_path": run_config.agent_config_path,
+            "agent_profile_name": run_config.agent_profile_name,
             "code_patch_path": run_config.code_patch_path,
             "openai_model": run_config.openai_model,
             "openai_api_key_env": run_config.openai_api_key_env,
             "openai_base_url": run_config.openai_base_url,
+            "anthropic_model": run_config.anthropic_model,
+            "anthropic_api_key_env": run_config.anthropic_api_key_env,
+            "anthropic_base_url": run_config.anthropic_base_url,
+            "anthropic_version": run_config.anthropic_version,
         }
         diagnostics["readiness"] = readiness.to_dict()
         diagnostics_path = self._write_json(run_dir / "diagnostics.json", diagnostics)

@@ -41,9 +41,20 @@ class OpenAIOpsAgent:
         """Load runtime configuration before the problem starts."""
 
         if run_config is not None:
-            model = getattr(run_config, "openai_model", model)
-            api_key_env = getattr(run_config, "openai_api_key_env", api_key_env)
-            base_url = getattr(run_config, "openai_base_url", base_url)
+            section = dict(getattr(run_config, "ops_agent_config", {}) or {})
+            model = str(section.get("model", getattr(run_config, "openai_model", model)))
+            api_key_env = str(
+                section.get(
+                    "api_key_env",
+                    getattr(run_config, "openai_api_key_env", api_key_env),
+                )
+            )
+            base_url = str(
+                section.get(
+                    "base_url",
+                    getattr(run_config, "openai_base_url", base_url),
+                )
+            )
 
         self.model = model
         self.api_key_env = api_key_env or "OPENAI_API_KEY"

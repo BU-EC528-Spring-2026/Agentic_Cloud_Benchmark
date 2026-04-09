@@ -24,15 +24,36 @@ class AnthropicCodePatchAgent(OpenAICodePatchAgent):
         *,
         output_dir: Path,
     ) -> dict[str, str]:
+        section = dict(run_config.code_agent_config or {})
+        model = str(section.get("model", run_config.anthropic_model)).strip()
+        api_key_env = str(
+            section.get(
+                "api_key_env",
+                run_config.anthropic_api_key_env or "ANTHROPIC_API_KEY",
+            )
+        ).strip()
+        base_url = str(
+            section.get(
+                "base_url",
+                run_config.anthropic_base_url or "https://api.anthropic.com",
+            )
+        ).strip()
+        version = str(
+            section.get(
+                "version",
+                run_config.anthropic_version or "2023-06-01",
+            )
+        ).strip()
+
         api_key = os.environ.get(
-            run_config.anthropic_api_key_env or "ANTHROPIC_API_KEY",
+            api_key_env or "ANTHROPIC_API_KEY",
             "",
         )
         if not api_key:
             raise ValueError(
-                f"Environment variable `{run_config.anthropic_api_key_env}` is not set."
+                f"Environment variable `{api_key_env}` is not set."
             )
-        if not run_config.anthropic_model:
+        if not model:
             raise ValueError(
                 "RunConfig.anthropic_model is required for AnthropicCodePatchAgent."
             )
@@ -49,10 +70,10 @@ class AnthropicCodePatchAgent(OpenAICodePatchAgent):
             "initial_answer",
             anthropic_messages_create,
             api_key=api_key,
-            model=run_config.anthropic_model,
+            model=model,
             prompt=prompt,
-            base_url=run_config.anthropic_base_url or "https://api.anthropic.com",
-            version=run_config.anthropic_version or "2023-06-01",
+            base_url=base_url or "https://api.anthropic.com",
+            version=version or "2023-06-01",
         )
         call_records.append(call_record)
         response_path.write_text(raw_text, encoding="utf-8")
@@ -73,10 +94,10 @@ class AnthropicCodePatchAgent(OpenAICodePatchAgent):
                 f"repair_answer_{len(call_records)}",
                 anthropic_messages_create,
                 api_key=api_key,
-                model=run_config.anthropic_model,
+                model=model,
                 prompt=repair_prompt,
-                base_url=run_config.anthropic_base_url or "https://api.anthropic.com",
-                version=run_config.anthropic_version or "2023-06-01",
+                base_url=base_url or "https://api.anthropic.com",
+                version=version or "2023-06-01",
             )
             call_records.append(call_record)
             raw_text = f"{raw_text}\n\n--- PATCH REPAIR ---\n{repair_text}"

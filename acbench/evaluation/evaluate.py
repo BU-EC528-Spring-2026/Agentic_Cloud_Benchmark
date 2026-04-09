@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from acbench.agents.profile import apply_agent_profile_to_payload
 from acbench.models.runtime import RunConfig
 from acbench.orchestrator.runner import ACBenchRunner
 from acbench.paths import repo_root, resolve_repo_path
@@ -45,11 +46,16 @@ def _build_run_config(
 ) -> RunConfig:
     """Build one RunConfig from one prediction payload."""
 
+    payload = apply_agent_profile_to_payload(payload)
     return RunConfig(
         dry_run=bool(payload.get("dry_run", False)),
         code_patch_path=patch_path,
         aiops_agent_ref=str(payload.get("aiops_agent_ref", "")),
         code_agent_ref=str(payload.get("code_agent_ref", "")),
+        agent_config_path=str(payload.get("agent_config_path", payload.get("agent_config", ""))),
+        agent_profile_name=str(payload.get("agent_profile_name", "")),
+        code_agent_config=dict(payload.get("code_agent_config", {})),
+        ops_agent_config=dict(payload.get("ops_agent_config", {})),
         openai_model=str(payload.get("openai_model", "")),
         openai_api_key_env=str(payload.get("openai_api_key_env", "OPENAI_API_KEY")),
         openai_base_url=str(payload.get("openai_base_url", "")),
