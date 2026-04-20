@@ -16,11 +16,11 @@ ACBench is a standalone benchmark for evaluating whether an agent can:
 
 The repo currently contains:
 
-- `54` scenarios total
-- `9` local scenarios
-- `45` GitHub-derived scenarios
+- `61` scenarios total
+- `12` local scenarios
+- `49` GitHub-derived scenarios
 - `18` code-only scenarios
-- `18` ops-only scenarios
+- `25` ops-only scenarios
 - `18` combined scenarios
 
 Task banks:

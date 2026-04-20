@@ -21,9 +21,9 @@ Under each source directory, scenarios are grouped by mode:
 
 Current counts:
 
-- local: `9`
-- GitHub-derived: `45`
-- total: `54`
+- local: `12`
+- GitHub-derived: `49`
+- total: `61`
 
 Current bundles:
 
