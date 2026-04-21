@@ -11,15 +11,17 @@ It supports three scenario types:
 ---
 
 ## Why use ACBench?
-Use ACBench to:
-- Compare model/provider performance on reproducible tasks.
-- Run single-scenario experiments quickly from the CLI.
-- Evaluate full manifests in batch with consistent outputs.
-- Measure both implementation quality (code) and incident reasoning (ops).
+
+- Benchmark models on the **same reproducible scenarios** so comparisons are fair.
+- Run workflows for **fixing code bugs (code)**, **handling incidents (ops)**, and **combining both (code + ops) in one run**.
+- Run both fast, iterative **single-scenario CLI experiments** and **full-manifest batch evaluations**.
+- Produce structured run artifacts (`result.json`, `summary.json`, logs, patches) for debugging and reporting.
+- Validate not just whether a patch compiles, but whether an agent can **detect, localize, and fix** incidents end to end.
 
 ---
 
 ## Current Benchmark Scope
+
 The repository currently includes **54 scenarios**:
 
 - **Local scenarios**: 9 total
@@ -58,6 +60,7 @@ The current GitHub-derived task bank is built from localized reproductions of `o
 ---
 
 ## Supported Providers
+
 Built-in provider-backed and scaffold agent support includes:
 - `openai`
 - `anthropic`
@@ -68,6 +71,7 @@ See agent config examples in `configs/agents/`.
 ---
 
 ## Quick Start
+
 ### 1) Environment setup
 ```bash
 python3 -m venv .venv
@@ -99,9 +103,15 @@ acbench \
 ---
 
 ## Common Runs
-### A) Single code task with OpenAI agent
+
+### A) OpenAI Examples
+Set credentials once per shell session:
 ```bash
 export OPENAI_API_KEY="<your-key>"
+```
+
+A1) Single local code scenario
+```bash
 acbench \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json \
   --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent \
@@ -109,26 +119,7 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-### B) Single code task with Antropic agent
-```bash
-export ANTHROPIC_API_KEY="<your-key>"
-acbench \
-  --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json \
-  --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent \
-  --anthropic-model claude-sonnet-4-20250514 \
-  --anthropic-api-key-env ANTHROPIC_API_KEY
-```
-
-### C) Single code task with Azure OpenAI agent
-
-```bash
-export AZURE_OPENAI_API_KEY="<your-key>"
-acbench \
-  --agent-config configs/agents/azure_openai.example.json \
-  --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
-```
-
-### D) Combined local scenario with OpenAI code + ops agents
+A2) Combined local scenario with OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
@@ -138,7 +129,7 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-### E) Combined GitHub-derived scenario with OpenAI agents
+A3) Combined GitHub-derived scenario with OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
@@ -148,7 +139,32 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-### F) Combined GitHub-derived scenario with Anthropic agents
+### B) Anthropic Examples
+Set credentials once per shell session:
+```bash
+export ANTHROPIC_API_KEY="<your-key>"
+```
+
+B1) Single local code scenario
+```bash
+acbench \
+  --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json \
+  --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent \
+  --anthropic-model claude-sonnet-4-20250514 \
+  --anthropic-api-key-env ANTHROPIC_API_KEY
+```
+
+B2) Combined local scenario with Anthropic code + ops agents
+```bash
+acbench \
+  --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
+  --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent \
+  --aiops-agent-ref acbench.agents.anthropic_ops:AnthropicOpsAgent \
+  --anthropic-model claude-sonnet-4-20250514 \
+  --anthropic-api-key-env ANTHROPIC_API_KEY
+```
+
+B3) Combined GitHub-derived scenario with Anthropic code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
@@ -158,13 +174,39 @@ acbench \
   --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
-### G) Combined GitHub-derived scenario with Azure OpenAI agent
-
+### C) Azure OpenAI Examples
+Set credential once per shell session:
 ```bash
 export AZURE_OPENAI_API_KEY="<your-key>"
+```
+
+C1) Single local code scenario
+```bash
 acbench \
   --agent-config configs/agents/azure_openai.example.json \
-  --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json
+  --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
+C2) Combined local scenario with Azure OpenAI code + ops agents
+```bash
+acbench \
+  --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
+  --code-agent-ref acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent \
+  --aiops-agent-ref acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent \
+  --openai-model gpt-4.1-mini \
+  --openai-base-url https://<resource>.openai.azure.com/openai/v1/ \
+  --openai-api-key-env AZURE_OPENAI_API_KEY
+```
+
+C3) Combined GitHub-derived scenario with Azure OpenAI code + ops agents
+```bash
+acbench \
+  --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
+  --code-agent-ref acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent \
+  --aiops-agent-ref acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent \
+  --openai-model gpt-4.1-mini \
+  --openai-base-url https://<resource>.openai.azure.com/openai/v1/ \
+  --openai-api-key-env AZURE_OPENAI_API_KEY
 ```
 
 ---
@@ -223,6 +265,7 @@ python scripts/run_agent_evals.py \
 ---
 
 ## Result Files
+
 Each run creates a timestamped directory under `runs/`.
 
 The main files are:
@@ -247,6 +290,7 @@ Ops runs may also include:
 ---
 
 ## Documentation
+
 - `docs/QUICKSTART.md` – setup and first runs
 - `docs/COMMANDS.md` – CLI command reference
 - `docs/SCENARIO_AUTHORING.md` – how to write scenarios
@@ -256,6 +300,7 @@ Ops runs may also include:
 ---
 
 ## Demo
+
 **Demo 1**
 - https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing
 - Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
@@ -273,6 +318,7 @@ Ops runs may also include:
 ---
 
 ## Notes
+
 - local ops scenarios are rubric-graded incident tasks.
 - GitHub-derived scenarios run on localized fixture reproductions (not live repository checkout).
 - local config files such as `configs/*.local.json` are ignored by git.
