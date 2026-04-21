@@ -49,6 +49,30 @@ class AzureOpenAICodePatchAgentTests(unittest.TestCase):
 
 
 class AzureOpenAIOpsAgentTests(unittest.TestCase):
+    def test_configure_uses_run_config_openai_fallbacks(self) -> None:
+        agent = AzureOpenAIOpsAgent()
+        run_config = RunConfig(
+            openai_model="azure-model-from-run-config",
+            openai_api_key_env="AZURE_RUN_CONFIG_KEY",
+            openai_base_url="https://example.openai.azure.com/openai/v1/",
+        )
+
+        with patch("acbench.agents.openai_ops.OpenAIOpsAgent.configure") as mock_configure:
+            agent.configure(run_config)
+
+        self.assertEqual(
+            mock_configure.call_args.kwargs["model"],
+            "azure-model-from-run-config",
+        )
+        self.assertEqual(
+            mock_configure.call_args.kwargs["api_key_env"],
+            "AZURE_RUN_CONFIG_KEY",
+        )
+        self.assertEqual(
+            mock_configure.call_args.kwargs["base_url"],
+            "https://example.openai.azure.com/openai/v1/",
+        )
+
     def test_configure_requires_model(self) -> None:
         agent = AzureOpenAIOpsAgent()
 

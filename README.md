@@ -1,6 +1,6 @@
 # ACBench
 
-ACBench is a benchmark harness for evaluating AI agents on realistic engineering workflows.
+ACBench is a standalone benchmark for evaluating AI agents on realistic engineering workflows.
 
 It supports three scenario types:
 
@@ -8,30 +8,22 @@ It supports three scenario types:
 2. **Ops tasks**: analyze incident evidence and produce a structured assessment.
 3. **Combined tasks**: perform both ops reasoning + code repair in one run.
 
----
-
-## Why use ACBench?
-
-- Benchmark models on the **same reproducible scenarios** so comparisons are fair.
-- Run workflows for **fixing code bugs (code)**, **handling incidents (ops)**, and **combining both (code + ops) in one run**.
-- Run both fast, iterative **single-scenario CLI experiments** and **full-manifest batch evaluations**.
-- Produce structured run artifacts (`result.json`, `summary.json`, logs, patches) for debugging and reporting.
-- Validate not just whether a patch compiles, but whether an agent can **detect, localize, and fix** incidents end to end.
+ACBench provides a consistent way to compare models (OpenAI, Anthropic, and Azure OpenAI) on reproducible engineering tasks across code, ops, and combined workflows. It supports quick single-scenario experiments as well as full batch evaluations, and produces structured artifacts (`result.json`, `summary.json`, logs, patches) so user can verify whether an agent detected, localized, and repaired an issue end to end.
 
 ---
 
 ## Current Benchmark Scope
 
-The repository currently includes **54 scenarios**:
+The repository currently includes **`54` scenarios**:
 
-- **Local scenarios**: 9 total
-  - 3 code
-  - 3 ops
-  - 3 combined
-- **GitHub-derived scenarios**: 45 total
-  - 15 code
-  - 15 ops
-  - 15 combined
+- **Local scenarios**: `9` total
+  - `3` code
+  - `3` ops
+  - `3` combined
+- **GitHub-derived scenarios**: `45` total
+  - `15` code
+  - `15` ops
+  - `15` combined
 
 Scenario roots:
 - Local: `tasks/scenarios/local/{code,ops,combined}/`
@@ -102,15 +94,20 @@ acbench \
 
 ---
 
-## Common Runs
+## Provider-Specific Run
+Use this section when you want to run one scenario (or a small number of scenarios) manually.
 
-### A) OpenAI Examples
+- **A. OpenAI**
+- **B. Anthropic**
+- **C. Azure OpenAI**
+
+### A) OpenAI  
 Set credentials once per shell session:
 ```bash
 export OPENAI_API_KEY="<your-key>"
 ```
 
-A1) Single local code scenario
+#### A1) Single local code scenario
 ```bash
 acbench \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json \
@@ -119,7 +116,7 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-A2) Combined local scenario with OpenAI code + ops agents
+#### A2) Combined local scenario with OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
@@ -129,7 +126,7 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-A3) Combined GitHub-derived scenario with OpenAI code + ops agents
+#### A3) Combined GitHub-derived scenario with OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
@@ -139,13 +136,13 @@ acbench \
   --openai-api-key-env OPENAI_API_KEY
 ```
 
-### B) Anthropic Examples
+### B) Anthropic  
 Set credentials once per shell session:
 ```bash
 export ANTHROPIC_API_KEY="<your-key>"
 ```
 
-B1) Single local code scenario
+#### B1) Single local code scenario
 ```bash
 acbench \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json \
@@ -154,7 +151,7 @@ acbench \
   --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
-B2) Combined local scenario with Anthropic code + ops agents
+#### B2) Combined local scenario with Anthropic code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
@@ -164,7 +161,7 @@ acbench \
   --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
-B3) Combined GitHub-derived scenario with Anthropic code + ops agents
+#### B3) Combined GitHub-derived scenario with Anthropic code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
@@ -174,20 +171,20 @@ acbench \
   --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
 
-### C) Azure OpenAI Examples
-Set credential once per shell session:
+### C) Azure OpenAI  
+Set credentials once per shell session:
 ```bash
 export AZURE_OPENAI_API_KEY="<your-key>"
 ```
 
-C1) Single local code scenario
+#### C1) Single local code scenario
 ```bash
 acbench \
   --agent-config configs/agents/azure_openai.example.json \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
 ```
 
-C2) Combined local scenario with Azure OpenAI code + ops agents
+#### C2) Combined local scenario with Azure OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
@@ -198,7 +195,7 @@ acbench \
   --openai-api-key-env AZURE_OPENAI_API_KEY
 ```
 
-C3) Combined GitHub-derived scenario with Azure OpenAI code + ops agents
+#### C3) Combined GitHub-derived scenario with Azure OpenAI code + ops agents
 ```bash
 acbench \
   --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
@@ -212,8 +209,14 @@ acbench \
 ---
 
 ## Batch Evaluation Workflows
+Use this section when you want to evaluate many scenraios in one run.
 
-### Run local gold suite
+- **A. Reference-Baseline Evaluations:** Sanity-check the harness and scoring.
+- **B. Direct Provider Batch Scripts:** Provider-specific execution paths.
+- **C. Generic Batch Runner:** Running via agent profile JSONs.
+
+### A) Reference-Baseline Evaluations
+#### A1) Run local gold suite
 ```bash
 acbench \
   --manifest manifests/local_suite.json \
@@ -221,7 +224,7 @@ acbench \
   --evaluation-output runs/local_suite_eval.json
 ```
 
-### Run GitHub/OpenClaw extended gold suite
+#### A2) Run GitHub/OpenClaw extended gold suite
 ```bash
 acbench \
   --manifest manifests/github_openclaw_extended.json \
@@ -229,37 +232,49 @@ acbench \
   --evaluation-output runs/github_openclaw_extended_gold_eval.json
 ```
 
-### Run default OpenAI batch script from config
+### B) Direct Provider Batch Scripts
+#### B1) OpenAI  
 ```bash
+cp configs/openai_direct.example.json configs/openai_direct.local.json
+# Edit configs/openai_direct.local.json (set model and/or api key details)
 python scripts/run_openai_agent_evals.py \
   --config configs/openai_direct.local.json
 ```
 
-### Run default Anthropic batch script from config
+#### B2) Anthropic  
 ```bash
 cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
+# Edit configs/anthropic_direct.local.json (set model and/or api key details)
 python scripts/run_anthropic_agent_evals.py \
   --config configs/anthropic_direct.local.json
 ```
 
-### Run Azure OpenAI batch evaluation through generic agent runner
+#### B3) Azure OpenAI  
 ```bash
-export AZURE_OPENAI_API_KEY="<your-key>"
-python scripts/run_agent_evals.py \
-  --agent-config configs/agents/azure_openai.example.json
+cp configs/azure_openai_direct.example.json configs/azure_openai_direct.local.json
+# Edit configs/azure_openai_direct.local.json (agent profile path, manifests, outputs)
+python scripts/run_azure_openai_agent_evals.py \
+  --config configs/azure_openai_direct.local.json
 ```
 
-### Run one scenario through the generic agent profile
+### C) Generic Batch Runner
+#### C1) Run one scenario through an agent profile
 ```bash
 acbench \
   --agent-config configs/agents/claude_sonnet.example.json \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
 ```
 
-### Run the full local + GitHub suites through the generic batch runner
+#### C2) Run full local + GitHub suites through the generic batch runner
 ```bash
 python scripts/run_agent_evals.py \
   --agent-config configs/agents/claude_sonnet.example.json
+```
+
+#### C3) Azure OpenAI example via generic batch runner
+```bash
+python scripts/run_agent_evals.py \
+  --agent-config configs/agents/azure_openai.example.json
 ```
 
 ---

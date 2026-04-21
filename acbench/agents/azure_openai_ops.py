@@ -21,17 +21,23 @@ class AzureOpenAIOpsAgent(OpenAIOpsAgent):
 
         if run_config is not None:
             section = dict(getattr(run_config, "ops_agent_config", {}) or {})
-            model = str(section.get("model", model)).strip()
+            model = str(
+                section.get(
+                    "model",
+                    getattr(run_config, "openai_model", model),
+                )
+            ).strip()
+
             api_key_env = str(
                 section.get(
                     "api_key_env", 
-                    api_key_env
+                    getattr(run_config, "openai_api_key_env", api_key_env),
                 )
             ).strip()
             base_url = str(
                 section.get(
                     "base_url", 
-                    base_url
+                    getattr(run_config, "openai_base_url", base_url),
                 )
             ).strip()
 
