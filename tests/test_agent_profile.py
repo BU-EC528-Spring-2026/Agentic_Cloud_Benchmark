@@ -50,6 +50,42 @@ class AgentProfileTests(unittest.TestCase):
         self.assertEqual(resolved["code_agent_config"]["model"], "claude-test")
         self.assertEqual(resolved["ops_agent_config"]["version"], "2023-06-01")
 
+    def test_load_and_resolve_azure_openai_profile_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            profile_path = Path(tmp_dir) / "azure.json"
+            profile_path.write_text(
+                json.dumps(
+                    {
+                        "name": "azure-openai",
+                        "code": {
+                            "provider": "azure_openai",
+                            "model": "gpt-4.1-mini",
+                            "api_key_env": "AZURE_OPENAI_API_KEY",
+                            "base_url": "https://example.openai.azure.com/openai/v1/",
+                        },
+                        "ops": {
+                            "provider": "azure_openai",
+                            "model": "gpt-4.1-mini",
+                            "api_key_env": "AZURE_OPENAI_API_KEY",
+                            "base_url": "https://example.openai.azure.com/openai/v1/",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            resolved = load_and_resolve_agent_profile(profile_path)
+
+        self.assertEqual(
+            resolved["code_agent_ref"],
+            "acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent",
+        )
+        self.assertEqual(
+            resolved["aiops_agent_ref"],
+            "acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent",
+        )
+        self.assertEqual(resolved["code_agent_config"]["provider"], "azure_openai")
+        self.assertEqual(resolved["ops_agent_config"]["provider"], "azure_openai")
+
     def test_apply_agent_profile_to_payload_merges_agent_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             profile_path = Path(tmp_dir) / "custom.json"

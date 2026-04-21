@@ -10,6 +10,7 @@ Each profile can define:
 Supported built-in providers:
 
 - `openai`
+- `azure_openai`
 - `anthropic`
 
 Typical usage:
@@ -22,4 +23,10 @@ Batch usage:
 
 ```bash
 python3 scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
+```
+
+Azure OpenAI usage:
+
+```bash
+acbench --agent-config configs/agents/azure_openai.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
 ```
