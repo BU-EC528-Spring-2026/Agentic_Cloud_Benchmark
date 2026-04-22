@@ -32,3 +32,5 @@ configs/*.local.json
 .idea/
 Thumbs.db
 .DS_Store
+azure_openai.local.json
+azure_openai_direct.local.json

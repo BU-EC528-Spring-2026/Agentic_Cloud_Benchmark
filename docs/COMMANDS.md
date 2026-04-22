@@ -131,6 +131,7 @@ Use one provider-agnostic agent profile:
 ```bash
 python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
 python scripts/run_agent_evals.py --agent-config configs/agents/openai_gpt41mini.example.json
+python scripts/run_agent_evals.py --agent-config configs/agents/azure_openai.example.json
 ```
 
 ## Export

@@ -12,6 +12,11 @@ dependencies = [
   "openai>=1.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<10",
+]
+
 [project.scripts]
 acbench = "acbench.orchestrator.cli:main"
 
