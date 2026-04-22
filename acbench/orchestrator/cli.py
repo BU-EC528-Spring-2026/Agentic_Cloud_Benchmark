@@ -25,6 +25,9 @@ from acbench.orchestrator.validate import check_scenario_readiness
 from acbench.models.runtime import RunConfig
 
 
+OPENAI_COMPATIBLE_PROVIDERS = {"openai", "azure_openai", "openai_compatible"}
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Create the CLI parser."""
 
@@ -86,7 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--openai-api-key-env",
-        default="OPENAI_API_KEY",
+        default="",
         help="Environment variable name that stores the OpenAI API key.",
     )
     parser.add_argument(
@@ -101,17 +104,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--anthropic-api-key-env",
-        default="ANTHROPIC_API_KEY",
+        default="",
         help="Environment variable name that stores the Anthropic API key.",
     )
     parser.add_argument(
         "--anthropic-base-url",
-        default="https://api.anthropic.com",
+        default="",
         help="Anthropic API base URL.",
     )
     parser.add_argument(
         "--anthropic-version",
-        default="2023-06-01",
+        default="",
         help="Anthropic API version header.",
     )
     parser.add_argument(
@@ -182,6 +185,29 @@ def run_doctor() -> int:
         )
     )
     return 0
+
+
+def _apply_provider_overrides(run_config: RunConfig, args: argparse.Namespace) -> None:
+    """Apply CLI-supplied provider overrides to profile-backed config sections."""
+
+    for section in (run_config.code_agent_config, run_config.ops_agent_config):
+        provider = str(section.get("provider", "")).strip().lower()
+        if provider in OPENAI_COMPATIBLE_PROVIDERS:
+            if args.openai_model:
+                section["model"] = args.openai_model
+            if args.openai_api_key_env:
+                section["api_key_env"] = args.openai_api_key_env
+            if args.openai_base_url:
+                section["base_url"] = args.openai_base_url
+        if provider == "anthropic":
+            if args.anthropic_model:
+                section["model"] = args.anthropic_model
+            if args.anthropic_api_key_env:
+                section["api_key_env"] = args.anthropic_api_key_env
+            if args.anthropic_base_url:
+                section["base_url"] = args.anthropic_base_url
+            if args.anthropic_version:
+                section["version"] = args.anthropic_version
 
 
 def main() -> int:
@@ -265,33 +291,16 @@ def main() -> int:
         ops_agent_config=dict(agent_profile.get("ops_agent_config", {})),
         code_patch_path=args.code_patch,
         openai_model=args.openai_model,
-        openai_api_key_env=args.openai_api_key_env,
+        openai_api_key_env=args.openai_api_key_env or "OPENAI_API_KEY",
         openai_base_url=args.openai_base_url,
         anthropic_model=args.anthropic_model,
-        anthropic_api_key_env=args.anthropic_api_key_env,
-        anthropic_base_url=args.anthropic_base_url,
-        anthropic_version=args.anthropic_version,
+        anthropic_api_key_env=args.anthropic_api_key_env or "ANTHROPIC_API_KEY",
+        anthropic_base_url=args.anthropic_base_url or "https://api.anthropic.com",
+        anthropic_version=args.anthropic_version or "2023-06-01",
         aiops_agent_type=args.aiops_agent_ref or "standalone-local-ops",
         code_agent_type=args.code_agent_ref or "unconfigured",
     )
-    for section in (run_config.code_agent_config, run_config.ops_agent_config):
-        provider = str(section.get("provider", "")).strip().lower()
-        if provider == "openai":
-            if args.openai_model:
-                section["model"] = args.openai_model
-            if args.openai_api_key_env:
-                section["api_key_env"] = args.openai_api_key_env
-            if args.openai_base_url:
-                section["base_url"] = args.openai_base_url
-        if provider == "anthropic":
-            if args.anthropic_model:
-                section["model"] = args.anthropic_model
-            if args.anthropic_api_key_env:
-                section["api_key_env"] = args.anthropic_api_key_env
-            if args.anthropic_base_url:
-                section["base_url"] = args.anthropic_base_url
-            if args.anthropic_version:
-                section["version"] = args.anthropic_version
+    _apply_provider_overrides(run_config, args)
     result = runner.run(args.scenario, dry_run=args.dry_run, run_config=run_config)
     print(json.dumps(result.to_dict(), indent=2))
     return 0

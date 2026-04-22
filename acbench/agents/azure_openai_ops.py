@@ -5,6 +5,12 @@ from __future__ import annotations
 from acbench.agents.openai_ops import OpenAIOpsAgent
 
 
+def _contains_placeholder(value: str) -> bool:
+    """Return whether one Azure config field still contains template markers."""
+
+    return "<" in value or ">" in value
+
+
 class AzureOpenAIOpsAgent(OpenAIOpsAgent):
     """OpenAI-compatible ops agent configured for Azure OpenAI credentials."""
 
@@ -45,9 +51,19 @@ class AzureOpenAIOpsAgent(OpenAIOpsAgent):
             raise ValueError(
                 "AzureOpenAIOpsAgent requires `ops.model` set to your Azure deployment name."
             )
+        if _contains_placeholder(model):
+            raise ValueError(
+                "AzureOpenAIOpsAgent `ops.model` still contains a placeholder. "
+                "Replace `<your deployment name>` with your actual Azure deployment name."
+            )
         if not base_url:
             raise ValueError(
                 "AzureOpenAIOpsAgent requires `ops.base_url` (for example `https://<resource>.openai.azure.com/openai/v1/`)."
+            )
+        if _contains_placeholder(base_url):
+            raise ValueError(
+                "AzureOpenAIOpsAgent `ops.base_url` still contains a placeholder. "
+                "Replace `<resource>` with your actual Azure resource host."
             )
 
         super().configure(

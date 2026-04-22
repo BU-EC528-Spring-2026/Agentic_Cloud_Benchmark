@@ -25,6 +25,7 @@ class OpenAIOpsAgent:
         self.model = ""
         self.api_key_env = "OPENAI_API_KEY"
         self.base_url = ""
+        self.api_mode = "responses"
         self.last_prompt = ""
         self.last_response = ""
         self.last_assessment: dict[str, Any] = {}
@@ -36,6 +37,7 @@ class OpenAIOpsAgent:
         model: str = "",
         api_key_env: str = "OPENAI_API_KEY",
         base_url: str = "",
+        api: str = "responses",
         **_: Any,
     ) -> None:
         """Load runtime configuration before the problem starts."""
@@ -55,10 +57,14 @@ class OpenAIOpsAgent:
                     getattr(run_config, "openai_base_url", base_url),
                 )
             )
+            api_mode = str(section.get("api", "responses"))
+        else:
+            api_mode = api
 
         self.model = model
         self.api_key_env = api_key_env or "OPENAI_API_KEY"
         self.base_url = base_url or ""
+        self.api_mode = OpenAIOpsAgent._normalize_api_mode(api_mode)
 
     def analyze(
         self,
@@ -88,14 +94,14 @@ class OpenAIOpsAgent:
 
         started = perf_counter()
         call_records: list[dict[str, Any]] = []
-        response, call_record = timed_call(
-            "initial_answer",
-            client.responses.create,
+        raw_text, call_record = self._generate_text(
+            client,
+            self.api_mode,
+            label="initial_answer",
             model=self.model,
-            input=prompt,
+            prompt=prompt,
         )
         call_records.append(call_record)
-        raw_text = getattr(response, "output_text", "") or ""
         prompt_path.write_text(prompt, encoding="utf-8")
         response_path.write_text(raw_text, encoding="utf-8")
 
@@ -110,14 +116,14 @@ class OpenAIOpsAgent:
                 invalid_response=raw_text,
                 validation_error=validation_error,
             )
-            repair_response, call_record = timed_call(
-                f"repair_answer_{len(call_records)}",
-                client.responses.create,
+            repair_text, call_record = self._generate_text(
+                client,
+                self.api_mode,
+                label=f"repair_answer_{len(call_records)}",
                 model=self.model,
-                input=repair_prompt,
+                prompt=repair_prompt,
             )
             call_records.append(call_record)
-            repair_text = getattr(repair_response, "output_text", "") or ""
             raw_text = f"{raw_text}\n\n--- ASSESSMENT REPAIR ---\n{repair_text}"
             response_path.write_text(raw_text, encoding="utf-8")
             assessment = self._extract_assessment(repair_text)
@@ -146,6 +152,77 @@ class OpenAIOpsAgent:
             "telemetry": telemetry,
             "telemetry_path": str(telemetry_path),
         }
+
+    @staticmethod
+    def _normalize_api_mode(api_mode: Any) -> str:
+        normalized = str(api_mode or "responses").strip().lower().replace(".", "_")
+        aliases = {
+            "response": "responses",
+            "responses": "responses",
+            "chat_completion": "chat_completions",
+            "chat_completions": "chat_completions",
+        }
+        if normalized not in aliases:
+            raise ValueError(
+                "Unsupported OpenAI-compatible API mode "
+                f"`{api_mode}`. Use `responses` or `chat_completions`."
+            )
+        return aliases[normalized]
+
+    @classmethod
+    def _generate_text(
+        cls,
+        client: OpenAI,
+        api_mode: str,
+        *,
+        label: str,
+        model: str,
+        prompt: str,
+    ) -> tuple[str, dict[str, Any]]:
+        if api_mode == "responses":
+            response, call_record = timed_call(
+                label,
+                client.responses.create,
+                model=model,
+                input=prompt,
+            )
+            return cls._extract_model_text(response), call_record
+
+        response, call_record = timed_call(
+            label,
+            client.chat.completions.create,
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return cls._extract_model_text(response), call_record
+
+    @staticmethod
+    def _extract_model_text(response: Any) -> str:
+        output_text = getattr(response, "output_text", None)
+        if isinstance(output_text, str) and output_text:
+            return output_text
+
+        choices = getattr(response, "choices", None) or []
+        for choice in choices:
+            message = getattr(choice, "message", None)
+            if message is None:
+                continue
+            content = getattr(message, "content", "")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts: list[str] = []
+                for item in content:
+                    text = ""
+                    if isinstance(item, dict):
+                        text = str(item.get("text", "")).strip()
+                    else:
+                        text = str(getattr(item, "text", "")).strip()
+                    if text:
+                        parts.append(text)
+                if parts:
+                    return "\n".join(parts)
+        return ""
 
     def _build_prompt(self, problem: NativeOpsProblem) -> str:
         prompt = {

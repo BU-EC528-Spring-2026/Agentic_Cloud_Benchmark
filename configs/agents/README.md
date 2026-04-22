@@ -28,5 +28,7 @@ python3 scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.e
 Azure OpenAI usage:
 
 ```bash
-acbench --agent-config configs/agents/azure_openai.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+cp configs/agents/azure_openai.example.json configs/agents/azure_openai.local.json
+# Edit the copied file to replace the Azure deployment name and `<resource>` host.
+acbench --agent-config configs/agents/azure_openai.local.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
 ```

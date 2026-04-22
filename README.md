@@ -175,35 +175,34 @@ acbench \
 Set credentials once per shell session:
 ```bash
 export AZURE_OPENAI_API_KEY="<your-key>"
+cp configs/agents/azure_openai.example.json configs/agents/azure_openai.local.json
+# Edit configs/agents/azure_openai.local.json:
+# - replace `code.model` / `ops.model` with your Azure deployment name
+# - replace `<resource>` in each `base_url` with your Azure resource host
+export ACBENCH_AZURE_AGENT_CONFIG="configs/agents/azure_openai.local.json"
+# For Azure-hosted Grok via Foundry, use your Azure local profile instead:
+# export ACBENCH_AZURE_AGENT_CONFIG="configs/agents/foundry_grok.local.json"
 ```
 
 #### C1) Single local code scenario
 ```bash
 acbench \
-  --agent-config configs/agents/azure_openai.example.json \
+  --agent-config "$ACBENCH_AZURE_AGENT_CONFIG" \
   --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
 ```
 
 #### C2) Combined local scenario with Azure OpenAI code + ops agents
 ```bash
 acbench \
-  --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json \
-  --code-agent-ref acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent \
-  --aiops-agent-ref acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent \
-  --openai-model gpt-4.1-mini \
-  --openai-base-url https://<resource>.openai.azure.com/openai/v1/ \
-  --openai-api-key-env AZURE_OPENAI_API_KEY
+  --agent-config "$ACBENCH_AZURE_AGENT_CONFIG" \
+  --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json
 ```
 
 #### C3) Combined GitHub-derived scenario with Azure OpenAI code + ops agents
 ```bash
 acbench \
-  --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json \
-  --code-agent-ref acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent \
-  --aiops-agent-ref acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent \
-  --openai-model gpt-4.1-mini \
-  --openai-base-url https://<resource>.openai.azure.com/openai/v1/ \
-  --openai-api-key-env AZURE_OPENAI_API_KEY
+  --agent-config "$ACBENCH_AZURE_AGENT_CONFIG" \
+  --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json
 ```
 
 ---
@@ -247,14 +246,6 @@ cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
 # Edit configs/anthropic_direct.local.json (set model and/or api key details)
 python scripts/run_anthropic_agent_evals.py \
   --config configs/anthropic_direct.local.json
-```
-
-#### B3) Azure OpenAI  
-```bash
-cp configs/azure_openai_direct.example.json configs/azure_openai_direct.local.json
-# Edit configs/azure_openai_direct.local.json (agent profile path, manifests, outputs)
-python scripts/run_azure_openai_agent_evals.py \
-  --config configs/azure_openai_direct.local.json
 ```
 
 ### C) Generic Batch Runner

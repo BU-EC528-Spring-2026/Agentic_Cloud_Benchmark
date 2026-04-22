@@ -34,6 +34,14 @@ _PROVIDER_DEFAULTS: dict[str, dict[str, dict[str, str]]] = {
             "agent_ref": "acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent",
         },
     },
+    "openai_compatible": {
+        "code": {
+            "agent_ref": "acbench.agents.openai_code:OpenAICodePatchAgent",
+        },
+        "ops": {
+            "agent_ref": "acbench.agents.openai_ops:OpenAIOpsAgent",
+        },
+    },
 }
 
 

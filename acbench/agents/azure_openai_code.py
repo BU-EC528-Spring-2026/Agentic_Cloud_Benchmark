@@ -8,6 +8,12 @@ from acbench.agents.openai_code import OpenAICodePatchAgent
 from acbench.models.runtime import RunConfig
 
 
+def _contains_placeholder(value: str) -> bool:
+    """Return whether one Azure config field still contains template markers."""
+
+    return "<" in value or ">" in value
+
+
 class AzureOpenAICodePatchAgent(OpenAICodePatchAgent):
     """OpenAI-compatible code agent configured for Azure OpenAI credentials."""
 
@@ -32,9 +38,19 @@ class AzureOpenAICodePatchAgent(OpenAICodePatchAgent):
             raise ValueError(
                 "AzureOpenAICodePatchAgent requires `code.model` set to your Azure deployment name."
             )
+        if _contains_placeholder(model):
+            raise ValueError(
+                "AzureOpenAICodePatchAgent `code.model` still contains a placeholder. "
+                "Replace `<your deployment name>` with your actual Azure deployment name."
+            )
         if not base_url:
             raise ValueError(
                 "AzureOpenAICodePatchAgent requires `code.base_url` (for example `https://<resource>.openai.azure.com/openai/v1/`)."
+            )
+        if _contains_placeholder(base_url):
+            raise ValueError(
+                "AzureOpenAICodePatchAgent `code.base_url` still contains a placeholder. "
+                "Replace `<resource>` with your actual Azure resource host."
             )
 
         azure_run_config = replace(
