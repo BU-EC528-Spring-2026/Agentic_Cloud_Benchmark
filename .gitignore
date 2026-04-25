@@ -26,6 +26,13 @@ venv/
 .env
 .env.*
 configs/*.local.json
+
+# Local agent/tooling state
+.codex
+.codex/
+.claude/
+.continue/
+
 *.orig
 *.rej
 .vscode/

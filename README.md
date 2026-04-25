@@ -1,53 +1,133 @@
 # ACBench
 
-Demo 1 Link: https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing ; Quiz Link: https://forms.gle/cTooPJ68VxmJPmCX9
+ACBench is the **Agentic Cloud Benchmark**: a standalone benchmark for evaluating
+whether AI agents can handle realistic cloud engineering work.
 
-Demo 2 Link: https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing ; Quiz Link: https://forms.gle/E4e7J8aFsePPqcQK7 ; Video Link: https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
+It focuses on three capabilities:
 
-Demo 3 Link: [https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing](https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing) ; Quiz Link: https://forms.gle/zGEKQNbrwm9oXN4N7 ; Video Link: https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
+- **Code repair**: fix bugs in local repository fixtures and pass tests.
+- **Ops incident analysis**: diagnose incident-style failures from logs, symptoms,
+  reproduction steps, and service context.
+- **Combined workflows**: reason through an incident and then repair the code
+  that caused it.
 
-ACBench is a standalone benchmark for evaluating whether an agent can:
+The benchmark is designed to be reproducible. Scenarios are defined as JSON
+files, code tasks run against local fixture repositories, ops tasks are graded
+with explicit rubrics, and batch evaluations write structured output under
+`runs/`.
 
-- repair code in a local repository fixture
-- analyze ops-style incidents
-- solve combined tasks that require both ops reasoning and code repair
+## Project Website
+
+A static project website is included under `website/`.
+
+To view it locally from the repository root:
+
+```bash
+python3 -m http.server 8080 --directory website
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+Do not paste a Linux/WSL path like
+`/mnt/c/Projects/.../website/index.html` directly into the browser address bar;
+many browsers treat that as a search query. Use the local server URL above.
+
+Website files:
+
+- `website/index.html`: main page
+- `website/styles.css`: page styling
+- `website/main.js`: leaderboard rendering
+- `website/assets/acbench-hero.png`: hero image
+
+The website is static HTML/CSS/JS, so it can later be deployed with GitHub Pages
+or any static hosting service.
+
+## Demo Materials
+
+- Demo 1 slides:
+  https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing
+- Demo 1 quiz:
+  https://forms.gle/cTooPJ68VxmJPmCX9
+- Demo 2 slides:
+  https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing
+- Demo 2 quiz:
+  https://forms.gle/E4e7J8aFsePPqcQK7
+- Demo 2 video:
+  https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
+- Demo 3 slides:
+  https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing
+- Demo 3 quiz:
+  https://forms.gle/zGEKQNbrwm9oXN4N7
+- Demo 3 video folder:
+  https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
 
 ## Current Scope
 
-The repo currently contains:
+The repository currently contains **54 scenarios**:
 
-- `54` scenarios total
-- `9` local scenarios
-- `45` GitHub-derived scenarios
-- `18` code-only scenarios
-- `18` ops-only scenarios
-- `18` combined scenarios
+| Source | Code | Ops | Combined | Total |
+| --- | ---: | ---: | ---: | ---: |
+| Local fixtures | 3 | 3 | 3 | 9 |
+| GitHub-derived OpenClaw fixtures | 15 | 15 | 15 | 45 |
+| **Total** | **18** | **18** | **18** | **54** |
 
-Task banks:
+Scenario locations:
 
 - local scenarios: `tasks/scenarios/local/{code,ops,combined}/`
 - GitHub-derived scenarios: `tasks/scenarios/github/{code,ops,combined}/`
 
-The current GitHub task bank is built from localized reproductions of
-`openclaw/openclaw` issues.
+The GitHub-derived task bank is built from localized reproductions of real
+`openclaw/openclaw` issues. These are not live checkouts of the upstream
+repository; they are stable local fixtures derived from real issue patterns.
+
+## Supported Agent Types
+
+ACBench has built-in integrations for two live model providers:
+
+- OpenAI
+- Anthropic / Claude
+
+Built-in live agent classes:
+
+- `acbench.agents.openai_code:OpenAICodePatchAgent`
+- `acbench.agents.openai_ops:OpenAIOpsAgent`
+- `acbench.agents.anthropic_code:AnthropicCodePatchAgent`
+- `acbench.agents.anthropic_ops:AnthropicOpsAgent`
+
+You can also plug in custom agents with:
+
+- `--code-agent-ref module:Class`
+- `--aiops-agent-ref module:Class`
+- `--agent-config configs/agents/<profile>.json`
+
+Code agents must expose a patch-generation interface. Ops agents must expose an
+analysis interface that returns a structured assessment or rubric-compatible
+answer.
 
 ## Repository Layout
 
 - `acbench/`: core runtime package
-- `acbench/orchestrator/`: CLI, runner, readiness checks
-- `acbench/agents/`: code and ops agents
+- `acbench/orchestrator/`: CLI, runner, scenario validation, readiness checks
+- `acbench/agents/`: OpenAI, Anthropic, scripted, and profile-based agents
 - `acbench/executors/`: code and ops execution paths
-- `acbench/evaluation/`: evaluation and report helpers
-- `acbench/models/`: shared scenario, runtime, and result schemas
-- `tasks/`: scenario definitions
-- `services/`: service docs and fixture repositories
+- `acbench/evaluation/`: manifest evaluation and report helpers
+- `acbench/models/`: scenario, runtime, and result schemas
+- `tasks/`: scenario definitions and task-bank overview
+- `services/`: service docs and local fixture repositories
 - `patches/`: gold/reference patches
 - `predictions/`: batch evaluation inputs
 - `manifests/`: scenario bundles
-- `runs/`: generated outputs
-- `docs/`: supporting docs
+- `runs/`: generated run outputs
+- `configs/`: example provider and agent-profile configs
+- `docs/`: deeper documentation
+- `website/`: static project website
+- `tests/`: unit and integration tests
 
-## Quick Start
+## Installation
 
 From the repository root:
 
@@ -59,57 +139,125 @@ python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-Check the environment:
+On Windows PowerShell, activate the environment with:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+After installation, check that the CLI is available:
 
 ```bash
 acbench --doctor
 ```
 
-Validate a scenario:
+## First Things To Try
+
+Validate one scenario without executing it:
 
 ```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --validate-scenario
 ```
 
-## Common Runs
+Run a dry run:
 
-Run one local code scenario with a gold patch:
+```bash
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --dry-run
+```
+
+Run a local code-repair scenario with the gold patch:
 
 ```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-patch patches/billing_pricing_bundle_fix.diff
 ```
 
-Run one local code scenario with the OpenAI patch agent:
+This applies the reference patch to the local fixture repository and evaluates
+whether the scenario passes its build/test criteria.
+
+## Running With OpenAI Agents
+
+Set your API key:
 
 ```bash
 export OPENAI_API_KEY="<your-key>"
+```
+
+Run one local code scenario:
+
+```bash
 acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-Run one local code scenario with a Claude patch agent:
-
-```bash
-export ANTHROPIC_API_KEY="<your-key>"
-acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
-```
-
-Run one local combined scenario with both agents:
+Run one local combined scenario:
 
 ```bash
 acbench --scenario tasks/scenarios/local/combined/billing_pricing__checkout_totals_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-Run one GitHub-derived combined scenario with both agents:
+Run one GitHub-derived combined scenario:
 
 ```bash
 acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.openai_code:OpenAICodePatchAgent --aiops-agent-ref acbench.agents.openai_ops:OpenAIOpsAgent --openai-model gpt-4.1-mini --openai-api-key-env OPENAI_API_KEY
 ```
 
-Run one GitHub-derived combined scenario with Claude code and ops agents:
+Run the default OpenAI batch config:
+
+```bash
+cp configs/openai_direct.example.json configs/openai_direct.local.json
+python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
+```
+
+## Running With Anthropic / Claude Agents
+
+Set your API key:
+
+```bash
+export ANTHROPIC_API_KEY="<your-key>"
+```
+
+Run one local code scenario:
+
+```bash
+acbench --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
+```
+
+Run one GitHub-derived combined scenario:
 
 ```bash
 acbench --scenario tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json --code-agent-ref acbench.agents.anthropic_code:AnthropicCodePatchAgent --aiops-agent-ref acbench.agents.anthropic_ops:AnthropicOpsAgent --anthropic-model claude-sonnet-4-20250514 --anthropic-api-key-env ANTHROPIC_API_KEY
 ```
+
+Run the default Anthropic batch config:
+
+```bash
+cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
+python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
+```
+
+Local config files such as `configs/*.local.json` are ignored by git.
+
+## Running With Generic Agent Profiles
+
+Agent profiles let you define code and ops providers in one JSON file.
+
+Example profile files:
+
+- `configs/agents/openai_gpt41mini.example.json`
+- `configs/agents/claude_sonnet.example.json`
+
+Run one scenario through a profile:
+
+```bash
+acbench --agent-config configs/agents/claude_sonnet.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
+Run the full local + GitHub suites through a profile:
+
+```bash
+python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
+```
+
+## Batch Evaluation
 
 Run the full local gold suite:
 
@@ -123,30 +271,14 @@ Run the full GitHub/OpenClaw gold suite:
 acbench --manifest manifests/github_openclaw_extended.json --predictions predictions/github_openclaw_extended_gold.json --evaluation-output runs/github_openclaw_extended_gold_eval.json
 ```
 
-Run the default local + GitHub OpenAI agent batches from config:
+Useful manifests:
 
-```bash
-python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
-```
-
-Run the default local + GitHub Anthropic agent batches from config:
-
-```bash
-cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
-python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
-```
-
-Run one scenario through the generic agent profile entrypoint:
-
-```bash
-acbench --agent-config configs/agents/claude_sonnet.example.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
-```
-
-Run the full local + GitHub suites through the generic batch runner:
-
-```bash
-python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
-```
+- `manifests/local_code_suite.json`
+- `manifests/local_ops_suite.json`
+- `manifests/local_combined_suite.json`
+- `manifests/local_suite.json`
+- `manifests/github_openclaw_smoke.json`
+- `manifests/github_openclaw_extended.json`
 
 ## Result Files
 
@@ -162,6 +294,7 @@ Code runs may also include:
 
 - `openai_generated_patch.diff`
 - `anthropic_generated_patch.diff`
+- `agent_generated_patch.diff`
 - `build.log`
 - `test.log`
 
@@ -174,9 +307,63 @@ Ops runs may also include:
 - `ops_eval/anthropic_ops_response.txt`
 - `ops_eval/anthropic_ops_assessment.json`
 
-## What Is Already Validated
+Batch evaluations can also write an aggregate JSON file through
+`--evaluation-output`.
 
-This repo has already been exercised successfully across:
+## Scenario Format
+
+Every production scenario should define:
+
+- `scenario_id`
+- `title`
+- `mode`
+- `source`
+- `service`
+- `task`
+- `visible_context`
+- `build`
+- `success_criteria`
+- `evaluation`
+- `constraints`
+- `metadata`
+
+Code-capable scenarios include `code_fault`. Ops-capable scenarios include
+`ops_fault`.
+
+For authoring rules, see:
+
+- `docs/SCENARIO_AUTHORING.md`
+- `docs/TASK_BANK_REQUIREMENTS.md`
+
+## OpenClaw Task Bank
+
+OpenClaw is the current GitHub-derived service family used by ACBench. The
+scenarios are localized reproductions derived from real `openclaw/openclaw`
+issues.
+
+ACBench uses OpenClaw because the issue set is:
+
+- concrete enough to reproduce
+- realistic enough to avoid toy-only tasks
+- clear enough to grade with tests or rubrics
+- broad enough to support code, ops, and combined workflows
+
+Current OpenClaw coverage:
+
+- `15` code scenarios
+- `15` ops scenarios
+- `15` combined scenarios
+- `45` total GitHub-derived scenarios
+
+The canonical bundle is:
+
+```text
+manifests/github_openclaw_extended.json
+```
+
+## What Has Been Validated
+
+This repository has already been exercised across:
 
 - local patch execution
 - local code-agent execution
@@ -184,16 +371,22 @@ This repo has already been exercised successfully across:
 - GitHub-derived code-agent execution
 - GitHub-derived combined-agent execution
 
-## Documentation
+## More Documentation
 
 - `docs/QUICKSTART.md`
 - `docs/COMMANDS.md`
 - `docs/SCENARIO_AUTHORING.md`
 - `docs/TASK_BANK_REQUIREMENTS.md`
 - `docs/ARCHITECTURE.md`
+- `tasks/README.md`
+- `configs/agents/README.md`
 
 ## Notes
 
-- local ops scenarios are rubric-graded incident tasks
-- GitHub-derived scenarios currently run on localized fixture reproductions, not live repository checkout
-- local config files such as `configs/*.local.json` are ignored by git
+- Local ops scenarios are rubric-graded incident tasks.
+- GitHub-derived scenarios run on localized fixture reproductions, not live
+  repository checkout.
+- API-backed agents require provider API keys in the configured environment
+  variables.
+- The static website is local-only until deployed to a hosting service such as
+  GitHub Pages.
