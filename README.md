@@ -46,6 +46,32 @@ Website files:
 The website is static HTML/CSS/JS, so it can later be deployed with GitHub Pages
 or any static hosting service.
 
+### Deploying the Website to GitHub Pages
+
+This repository includes a GitHub Actions workflow at:
+
+```text
+.github/workflows/pages.yml
+```
+
+When changes to `website/` are pushed to `main`, the workflow uploads the
+`website/` directory and deploys it to GitHub Pages.
+
+One-time GitHub setup:
+
+1. Open the GitHub repository in a browser.
+2. Go to `Settings` -> `Pages`.
+3. Under `Build and deployment`, set `Source` to `GitHub Actions`.
+4. Push the repository to `main`.
+5. Open the `Actions` tab and wait for `Deploy ACBench Website to GitHub Pages`
+   to finish.
+
+For this repository, the expected GitHub Pages URL is:
+
+```text
+https://BU-EC528-Spring-2026.github.io/Agentic_Cloud_Benchmark/
+```
+
 ## Demo Materials
 
 - Demo 1 slides:
