@@ -33,6 +33,21 @@ class EvaluateTests(unittest.TestCase):
         self.assertIn("code_only_billing_pricing_bundle_threshold", payload["results"])
         self.assertIn("ops_only_cache_api_stale_index", payload["results"])
         self.assertIn("combined_billing_pricing_checkout_totals", payload["results"])
+        self.assertIn("score_summary", payload)
+        self.assertIn("by_mode", payload)
+        self.assertIn("by_source", payload)
+        self.assertIn("by_difficulty", payload)
+        self.assertIn("final_score", payload["results"]["code_only_billing_pricing_bundle_threshold"])
+        self.assertIn(
+            "score_breakdown",
+            payload["results"]["ops_only_cache_api_stale_index"],
+        )
+        self.assertIn(
+            "failure_reasons",
+            payload["results"]["combined_billing_pricing_checkout_totals"],
+        )
+        self.assertIn("code_only", payload["by_mode"])
+        self.assertIn("local_fixture", payload["by_source"])
 
     def test_prediction_defaults_can_drive_agent_runs(self) -> None:
         manifest_path = self.temp_dir / "single_scenario_manifest.json"
@@ -75,6 +90,9 @@ class EvaluateTests(unittest.TestCase):
             "code_only_billing_pricing_bundle_threshold",
             results["results"],
         )
+        scenario_result = results["results"]["code_only_billing_pricing_bundle_threshold"]
+        self.assertIn("final_score", scenario_result)
+        self.assertGreater(scenario_result["final_score"], 0.0)
 
     def test_prediction_defaults_can_drive_ops_agent_runs(self) -> None:
         manifest_path = self.temp_dir / "single_ops_manifest.json"
@@ -116,4 +134,8 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual(
             results["results"]["ops_only_queue_worker_backlog_spike"]["ops_backend"],
             "acbench-local-ops",
+        )
+        self.assertIn(
+            "ops",
+            results["results"]["ops_only_queue_worker_backlog_spike"]["score_breakdown"],
         )

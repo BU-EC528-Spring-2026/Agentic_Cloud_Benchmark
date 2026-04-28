@@ -10,6 +10,7 @@ from acbench.agents.profile import apply_agent_profile_to_payload
 from acbench.models.runtime import RunConfig
 from acbench.orchestrator.runner import ACBenchRunner
 from acbench.paths import repo_root, resolve_repo_path
+from acbench.scoring import build_scorecard
 
 
 def _resolve_patch_input(
@@ -99,6 +100,10 @@ def evaluate_predictions(
         "missing": [],
         "results": {},
         "timing_summary": {},
+        "score_summary": {},
+        "by_mode": {},
+        "by_source": {},
+        "by_difficulty": {},
     }
 
     for entry in manifest["scenarios"]:
@@ -126,16 +131,28 @@ def evaluate_predictions(
             dry_run=run_config.dry_run,
             run_config=run_config,
         )
+        scorecard = build_scorecard(scenario, run_result)
         code_result = run_result.code_result
         ops_result = run_result.ops_result
         summary = {
+            "scenario_id": scenario.scenario_id,
+            "title": scenario.title,
             "mode": scenario.mode,
+            "source_type": scenario.source.type,
+            "difficulty": scenario.metadata.difficulty or "unknown",
+            "application": scenario.service.application,
+            "service": scenario.service.service,
             "status": run_result.status,
             "result_path": run_result.artifacts.result_path,
             "summary_path": run_result.artifacts.summary_path,
             "code_backend": code_result.backend if code_result else "",
             "ops_backend": ops_result.backend if ops_result else "",
             "run_total_seconds": run_result.unified_metrics.get("run_total_seconds", 0.0),
+            "final_score": scorecard["final_score"],
+            "ops_score": scorecard["ops_score"],
+            "code_score": scorecard["code_score"],
+            "score_breakdown": scorecard["score_breakdown"],
+            "failure_reasons": scorecard["failure_reasons"],
             "build_success": code_result.build_success if code_result else False,
             "test_success": code_result.test_success if code_result else False,
             "detected": ops_result.detected if ops_result else False,
@@ -237,7 +254,77 @@ def evaluate_predictions(
             6,
         ) if total_answer_count else 0.0,
     }
+    results["score_summary"] = _build_score_summary(results["results"])
+    results["by_mode"] = _build_group_summary(results["results"], "mode")
+    results["by_source"] = _build_group_summary(results["results"], "source_type")
+    results["by_difficulty"] = _build_group_summary(results["results"], "difficulty")
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results
+
+
+def _build_score_summary(result_items: dict[str, Any]) -> dict[str, Any]:
+    submitted = len(result_items)
+    if not submitted:
+        return {
+            "average_final_score": 0.0,
+            "average_code_score": 0.0,
+            "average_ops_score": 0.0,
+        }
+
+    final_scores = [float(item.get("final_score", 0.0)) for item in result_items.values()]
+    code_scores = [float(item.get("code_score", 0.0)) for item in result_items.values()]
+    ops_scores = [float(item.get("ops_score", 0.0)) for item in result_items.values()]
+    non_zero_code_scores = [score for score in code_scores if score > 0.0]
+    non_zero_ops_scores = [score for score in ops_scores if score > 0.0]
+
+    return {
+        "average_final_score": round(sum(final_scores) / submitted, 6),
+        "average_code_score": round(
+            sum(non_zero_code_scores) / len(non_zero_code_scores),
+            6,
+        ) if non_zero_code_scores else 0.0,
+        "average_ops_score": round(
+            sum(non_zero_ops_scores) / len(non_zero_ops_scores),
+            6,
+        ) if non_zero_ops_scores else 0.0,
+    }
+
+
+def _build_group_summary(
+    result_items: dict[str, Any],
+    field_name: str,
+) -> dict[str, Any]:
+    grouped: dict[str, dict[str, Any]] = {}
+
+    for item in result_items.values():
+        group_key = str(item.get(field_name, "unknown") or "unknown")
+        group = grouped.setdefault(
+            group_key,
+            {
+                "submitted": 0,
+                "success": 0,
+                "failure": 0,
+                "total_final_score": 0.0,
+                "scenario_ids": [],
+            },
+        )
+        group["submitted"] += 1
+        if item.get("status") == "success":
+            group["success"] += 1
+        else:
+            group["failure"] += 1
+        group["total_final_score"] += float(item.get("final_score", 0.0))
+        group["scenario_ids"].append(str(item.get("scenario_id", "")))
+
+    for group in grouped.values():
+        submitted = int(group["submitted"])
+        group["success_rate"] = round(group["success"] / submitted, 6) if submitted else 0.0
+        group["average_final_score"] = round(
+            group["total_final_score"] / submitted,
+            6,
+        ) if submitted else 0.0
+        del group["total_final_score"]
+
+    return grouped

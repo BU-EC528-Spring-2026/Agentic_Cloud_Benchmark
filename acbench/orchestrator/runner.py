@@ -16,6 +16,7 @@ from acbench.models.runtime import RunConfig
 from acbench.models.scenario import ScenarioSpec
 from acbench.orchestrator.validate import check_scenario_readiness
 from acbench.paths import repo_root, resolve_repo_path
+from acbench.scoring import build_scorecard
 
 
 class ACBenchRunner:
@@ -138,8 +139,9 @@ class ACBenchRunner:
 
         result.finalize(status=self._derive_status(result))
         result.unified_metrics = self._merge_metrics(result)
+        result.unified_metrics.update(build_scorecard(scenario, result))
         result.unified_metrics["run_total_seconds"] = round(perf_counter() - started, 6)
-        summary = self._build_summary(result)
+        summary = self._build_summary(scenario, result)
         self._update_artifacts_from_results(result)
 
         result_path = run_dir / "result.json"
@@ -227,7 +229,7 @@ class ACBenchRunner:
         return path
 
     @staticmethod
-    def _build_summary(result: BenchmarkResult) -> dict:
+    def _build_summary(scenario: ScenarioSpec, result: BenchmarkResult) -> dict:
         """Build a compact benchmark summary for fast inspection."""
 
         summary = {
@@ -235,7 +237,16 @@ class ACBenchRunner:
             "title": result.title,
             "mode": result.mode,
             "status": result.status,
+            "source_type": scenario.source.type,
+            "difficulty": scenario.metadata.difficulty or "unknown",
+            "application": scenario.service.application,
+            "service": scenario.service.service,
             "run_total_seconds": result.unified_metrics.get("run_total_seconds", 0.0),
+            "final_score": result.unified_metrics.get("final_score", 0.0),
+            "ops_score": result.unified_metrics.get("ops_score", 0.0),
+            "code_score": result.unified_metrics.get("code_score", 0.0),
+            "score_breakdown": result.unified_metrics.get("score_breakdown", {}),
+            "failure_reasons": result.unified_metrics.get("failure_reasons", []),
             "ops": None,
             "code": None,
         }
