@@ -93,34 +93,38 @@ https://BU-EC528-Spring-2026.github.io/Agentic_Cloud_Benchmark/
 
 ## Current Scope
 
-The repository currently contains **54 scenarios**:
+The repository currently contains **61 scenarios**:
 
 | Source | Code | Ops | Combined | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Local fixtures | 3 | 3 | 3 | 9 |
-| GitHub-derived OpenClaw fixtures | 15 | 15 | 15 | 45 |
-| **Total** | **18** | **18** | **18** | **54** |
+| Local fixtures | 3 | 6 | 3 | 12 |
+| GitHub-derived OpenClaw fixtures | 15 | 19 | 15 | 49 |
+| **Total** | **18** | **25** | **18** | **61** |
 
 Scenario locations:
 
 - local scenarios: `tasks/scenarios/local/{code,ops,combined}/`
 - GitHub-derived scenarios: `tasks/scenarios/github/{code,ops,combined}/`
 
-The GitHub-derived task bank is built from localized reproductions of real
-`openclaw/openclaw` issues. These are not live checkouts of the upstream
-repository; they are stable local fixtures derived from real issue patterns.
+The GitHub-derived task bank is built from localized reproductions and
+OpenClaw-style synthetic incidents. These are not live checkouts of the
+upstream repository; they are stable local fixtures and rubrics derived from
+real issue patterns.
 
 ## Supported Agent Types
 
-ACBench has built-in integrations for two live model providers:
+ACBench has built-in integrations for live model providers:
 
 - OpenAI
+- Azure OpenAI
 - Anthropic / Claude
 
 Built-in live agent classes:
 
 - `acbench.agents.openai_code:OpenAICodePatchAgent`
 - `acbench.agents.openai_ops:OpenAIOpsAgent`
+- `acbench.agents.azure_openai_code:AzureOpenAICodePatchAgent`
+- `acbench.agents.azure_openai_ops:AzureOpenAIOpsAgent`
 - `acbench.agents.anthropic_code:AnthropicCodePatchAgent`
 - `acbench.agents.anthropic_ops:AnthropicOpsAgent`
 
@@ -233,6 +237,32 @@ cp configs/openai_direct.example.json configs/openai_direct.local.json
 python scripts/run_openai_agent_evals.py --config configs/openai_direct.local.json
 ```
 
+## Running With Azure OpenAI Agents
+
+Set your API key and copy the profile template:
+
+```bash
+export AZURE_OPENAI_API_KEY="<your-key>"
+cp configs/agents/azure_openai.example.json configs/agents/azure_openai.local.json
+```
+
+Edit `configs/agents/azure_openai.local.json` so `model` is your Azure
+deployment name and `base_url` is your resource URL, for example
+`https://<resource>.openai.azure.com/openai/v1/`.
+
+Run one scenario through the Azure profile:
+
+```bash
+acbench --agent-config configs/agents/azure_openai.local.json --scenario tasks/scenarios/local/code/billing_pricing__bundle_discount_threshold.scenario.json
+```
+
+Run the default Azure batch config:
+
+```bash
+cp configs/azure_openai_direct.example.json configs/azure_openai_direct.local.json
+python scripts/run_azure_openai_agent_evals.py --config configs/azure_openai_direct.local.json
+```
+
 ## Running With Anthropic / Claude Agents
 
 Set your API key:
@@ -270,6 +300,7 @@ Example profile files:
 
 - `configs/agents/openai_gpt41mini.example.json`
 - `configs/agents/claude_sonnet.example.json`
+- `configs/agents/azure_openai.example.json`
 
 Run one scenario through a profile:
 
@@ -364,8 +395,8 @@ For authoring rules, see:
 ## OpenClaw Task Bank
 
 OpenClaw is the current GitHub-derived service family used by ACBench. The
-scenarios are localized reproductions derived from real `openclaw/openclaw`
-issues.
+scenarios are localized reproductions and OpenClaw-style incidents based on
+real issue patterns.
 
 ACBench uses OpenClaw because the issue set is:
 
@@ -377,9 +408,9 @@ ACBench uses OpenClaw because the issue set is:
 Current OpenClaw coverage:
 
 - `15` code scenarios
-- `15` ops scenarios
+- `19` ops scenarios
 - `15` combined scenarios
-- `45` total GitHub-derived scenarios
+- `49` total GitHub-derived scenarios
 
 The canonical bundle is:
 

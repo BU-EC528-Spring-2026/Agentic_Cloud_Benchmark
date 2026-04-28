@@ -9,7 +9,10 @@ import re
 from time import perf_counter
 from typing import Any
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - exercised in environments without openai installed
+    OpenAI = None
 
 from acbench.agents.telemetry import summarize_call_records, timed_call
 from acbench.models.runtime import RunConfig
@@ -36,6 +39,7 @@ class OpenAICodePatchAgent:
             )
         ).strip()
         base_url = str(section.get("base_url", run_config.openai_base_url or "")).strip()
+        api_mode = self._normalize_api_mode(section.get("api", "responses"))
 
         api_key = os.environ.get(api_key_env or "OPENAI_API_KEY", "")
         if not api_key:
@@ -44,6 +48,10 @@ class OpenAICodePatchAgent:
             )
         if not model:
             raise ValueError("RunConfig.openai_model is required for OpenAICodePatchAgent.")
+        if OpenAI is None:
+            raise ImportError(
+                "OpenAICodePatchAgent requires the `openai` package. Install dependencies or patch the client in tests."
+            )
 
         prompt = self._build_prompt(scenario)
         client = OpenAI(
@@ -52,14 +60,14 @@ class OpenAICodePatchAgent:
         )
         started = perf_counter()
         call_records: list[dict[str, Any]] = []
-        response, call_record = timed_call(
-            "initial_answer",
-            client.responses.create,
+        raw_text, call_record = self._generate_text(
+            client,
+            api_mode,
+            label="initial_answer",
             model=model,
-            input=prompt,
+            prompt=prompt,
         )
         call_records.append(call_record)
-        raw_text = getattr(response, "output_text", "") or ""
         prompt_path = output_dir / "openai_prompt.txt"
         response_path = output_dir / "openai_response.txt"
         telemetry_path = output_dir / "openai_code_telemetry.json"
@@ -76,14 +84,14 @@ class OpenAICodePatchAgent:
                 invalid_patch=patch_text,
                 validation_error=validation_error,
             )
-            repair_response, call_record = timed_call(
-                f"repair_answer_{len(call_records)}",
-                client.responses.create,
+            repair_text, call_record = self._generate_text(
+                client,
+                api_mode,
+                label=f"repair_answer_{len(call_records)}",
                 model=model,
-                input=repair_prompt,
+                prompt=repair_prompt,
             )
             call_records.append(call_record)
-            repair_text = getattr(repair_response, "output_text", "") or ""
             raw_text = f"{raw_text}\n\n--- PATCH REPAIR ---\n{repair_text}"
             response_path.write_text(raw_text, encoding="utf-8")
             patch_text = self._extract_patch(repair_text)
@@ -107,6 +115,77 @@ class OpenAICodePatchAgent:
             "telemetry": telemetry,
             "telemetry_path": str(telemetry_path),
         }
+
+    @staticmethod
+    def _normalize_api_mode(api_mode: Any) -> str:
+        normalized = str(api_mode or "responses").strip().lower().replace(".", "_")
+        aliases = {
+            "response": "responses",
+            "responses": "responses",
+            "chat_completion": "chat_completions",
+            "chat_completions": "chat_completions",
+        }
+        if normalized not in aliases:
+            raise ValueError(
+                "Unsupported OpenAI-compatible API mode "
+                f"`{api_mode}`. Use `responses` or `chat_completions`."
+            )
+        return aliases[normalized]
+
+    @classmethod
+    def _generate_text(
+        cls,
+        client: OpenAI,
+        api_mode: str,
+        *,
+        label: str,
+        model: str,
+        prompt: str,
+    ) -> tuple[str, dict[str, Any]]:
+        if api_mode == "responses":
+            response, call_record = timed_call(
+                label,
+                client.responses.create,
+                model=model,
+                input=prompt,
+            )
+            return cls._extract_model_text(response), call_record
+
+        response, call_record = timed_call(
+            label,
+            client.chat.completions.create,
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return cls._extract_model_text(response), call_record
+
+    @staticmethod
+    def _extract_model_text(response: Any) -> str:
+        output_text = getattr(response, "output_text", None)
+        if isinstance(output_text, str) and output_text:
+            return output_text
+
+        choices = getattr(response, "choices", None) or []
+        for choice in choices:
+            message = getattr(choice, "message", None)
+            if message is None:
+                continue
+            content = getattr(message, "content", "")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts: list[str] = []
+                for item in content:
+                    text = ""
+                    if isinstance(item, dict):
+                        text = str(item.get("text", "")).strip()
+                    else:
+                        text = str(getattr(item, "text", "")).strip()
+                    if text:
+                        parts.append(text)
+                if parts:
+                    return "\n".join(parts)
+        return ""
 
     def _build_prompt(self, scenario: ScenarioSpec) -> str:
         repository_path = scenario.service.repository_path or ""
@@ -187,6 +266,7 @@ class OpenAICodePatchAgent:
         if not any(line.startswith("@@") for line in lines):
             return "Patch does not contain any hunk headers."
 
+        saw_effective_change = False
         i = 0
         while i < len(lines):
             line = lines[i]
@@ -198,10 +278,23 @@ class OpenAICodePatchAgent:
             new_count = int(match.group(4) or "1") if match else None
             removed = 0
             added = 0
+            removed_block: list[str] = []
+            added_block: list[str] = []
+
+            def flush_change_block() -> None:
+                nonlocal saw_effective_change
+                if not removed_block and not added_block:
+                    return
+                if removed_block != added_block:
+                    saw_effective_change = True
+                removed_block.clear()
+                added_block.clear()
+
             i += 1
             while i < len(lines):
                 current = lines[i]
                 if current.startswith("diff --git ") or current.startswith("@@"):
+                    flush_change_block()
                     i -= 1
                     break
                 if current.startswith(("--- ", "+++ ", "index ")):
@@ -212,14 +305,18 @@ class OpenAICodePatchAgent:
                     continue
                 if current.startswith("+"):
                     added += 1
+                    added_block.append(current[1:])
                 elif current.startswith("-"):
                     removed += 1
+                    removed_block.append(current[1:])
                 elif current.startswith(" "):
+                    flush_change_block()
                     removed += 1
                     added += 1
                 else:
                     return f"Unsupported diff line: {current}"
                 i += 1
+            flush_change_block()
             if old_count is not None and new_count is not None and (
                 removed != old_count or added != new_count
             ):
@@ -228,6 +325,8 @@ class OpenAICodePatchAgent:
                     f"saw -{removed} +{added}."
                 )
             i += 1
+        if not saw_effective_change:
+            return "Patch does not change any file contents."
         return ""
 
     @staticmethod

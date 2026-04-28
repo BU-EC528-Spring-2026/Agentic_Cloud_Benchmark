@@ -92,6 +92,18 @@
       "scenario": "tasks/scenarios/github/ops/openclaw__pi_agent_abort_state_corruption.scenario.json"
     },
     {
+      "scenario": "tasks/scenarios/github/ops/openclaw__redis_session_eviction_storm.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/ops/openclaw__grpc_deadline_exceeded_cascade.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/ops/openclaw__worker_oom_killed_silent.scenario.json"
+    },
+    {
+      "scenario": "tasks/scenarios/github/ops/openclaw__rate_limiter_shared_key_collision.scenario.json"
+    },
+    {
       "scenario": "tasks/scenarios/github/combined/openclaw__completion_process_leak_incident.scenario.json"
     },
     {

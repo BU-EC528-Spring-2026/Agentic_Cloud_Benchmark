@@ -21,4 +21,4 @@ class DemoTests(unittest.TestCase):
         bundle = run_local_demo(self.temp_dir)
         self.assertTrue(Path(bundle["json_path"]).exists())
         self.assertTrue(Path(bundle["markdown_path"]).exists())
-        self.assertEqual(bundle["results"]["success"], 9)
+        self.assertEqual(bundle["results"]["success"], 12)

@@ -60,6 +60,10 @@
   "github_ops_openclaw_listener_telegram_reply_loss": {},
   "github_ops_openclaw_listener_subagent_residual_output": {},
   "github_ops_openclaw_pi_agent_abort_state_corruption": {},
+  "github_ops_openclaw_redis_session_eviction_storm": {},
+  "github_ops_openclaw_grpc_deadline_exceeded_cascade": {},
+  "github_ops_openclaw_worker_oom_killed_silent": {},
+  "github_ops_openclaw_rate_limiter_shared_key_collision": {},
   "github_combined_openclaw_completion_process_leak": {
     "use_gold_patch": true
   },

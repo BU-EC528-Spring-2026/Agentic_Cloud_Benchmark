@@ -5,9 +5,9 @@ This directory contains the benchmark task bank used by ACBench.
 The task bank is split into two sources:
 
 - `local/`: small, controlled fixtures used to validate the benchmark pipeline end to end
-- `github/`: localized reproductions derived from real `openclaw/openclaw` issues
+- `github/`: localized reproductions and OpenClaw-style incidents based on real issue patterns
 
-Scenarios live under [tasks/scenarios](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/tasks/scenarios) and are grouped by mode:
+Scenarios live under [tasks/scenarios](scenarios) and are grouped by mode:
 
 - `code`: code repair tasks
 - `ops`: incident analysis and remediation tasks
@@ -15,9 +15,9 @@ Scenarios live under [tasks/scenarios](/Users/yuan/Documents/GitHub/Agentic_Clou
 
 Current counts:
 
-- local: `9`
-- GitHub-derived: `45`
-- total: `54`
+- local: `12`
+- GitHub-derived: `49`
+- total: `61`
 
 ## Local Task Bank
 
@@ -32,6 +32,9 @@ Current counts:
 - `ops_only_cache_api_stale_index`: Diagnose a stale cache index that causes the API to serve outdated data.
 - `ops_only_queue_worker_backlog_spike`: Diagnose a worker backlog spike that causes queue latency and delayed processing.
 - `ops_only_payments_api_restart_loop`: Diagnose a restart loop that keeps the payments API unstable.
+- `ops_only_auth_service_token_clock_skew`: Diagnose valid JWTs being rejected due to NTP clock skew between the token issuer and validator nodes.
+- `ops_only_db_connection_pool_exhaustion`: Diagnose a connection pool exhaustion incident caused by a long-running uncommitted transaction.
+- `ops_only_notifier_dead_letter_queue_overflow`: Diagnose a dead letter queue overflow caused by a malformed webhook payload for a specific event type.
 
 ### Local combined
 
@@ -76,6 +79,10 @@ Current counts:
 - `github_ops_openclaw_listener_telegram_reply_loss`: Diagnose Telegram reply loss caused by a late-listener crash during delivery recovery.
 - `github_ops_openclaw_listener_subagent_residual_output`: Diagnose residual subagent output that reaches the listener after cleanup.
 - `github_ops_openclaw_pi_agent_abort_state_corruption`: Diagnose runtime-state corruption caused by late callbacks after a pi-agent abort.
+- `github_ops_openclaw_redis_session_eviction_storm`: Diagnose Redis session keys being evicted under memory pressure causing mass user logouts.
+- `github_ops_openclaw_grpc_deadline_exceeded_cascade`: Diagnose a hardcoded gRPC deadline shorter than actual backend latency causing cascading upstream timeouts.
+- `github_ops_openclaw_worker_oom_killed_silent`: Diagnose a background worker silently exiting after an OOM kill with no configured restart policy.
+- `github_ops_openclaw_rate_limiter_shared_key_collision`: Diagnose a rate limiter key missing a tenant identifier causing cross-tenant throttling.
 
 ### GitHub combined
 
@@ -97,8 +104,8 @@ Current counts:
 
 ## Related Files
 
-- scenario definitions: [tasks/scenarios](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/tasks/scenarios)
-- local bundle: [manifests/local_suite.json](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/manifests/local_suite.json)
-- GitHub bundle: [manifests/github_openclaw_extended.json](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/manifests/github_openclaw_extended.json)
-- authoring guide: [SCENARIO_AUTHORING.md](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/docs/SCENARIO_AUTHORING.md)
+- scenario definitions: [tasks/scenarios](scenarios)
+- local bundle: [manifests/local_suite.json](../manifests/local_suite.json)
+- GitHub bundle: [manifests/github_openclaw_extended.json](../manifests/github_openclaw_extended.json)
+- authoring guide: [SCENARIO_AUTHORING.md](../docs/SCENARIO_AUTHORING.md)
 - task-bank requirements: [TASK_BANK_REQUIREMENTS.md](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/docs/TASK_BANK_REQUIREMENTS.md)

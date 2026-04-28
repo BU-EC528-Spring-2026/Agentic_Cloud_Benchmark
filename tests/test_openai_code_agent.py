@@ -7,6 +7,40 @@ import unittest
 from acbench.agents.openai_code import OpenAICodePatchAgent
 
 
+class _FakeMessage:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class _FakeChoice:
+    def __init__(self, content: str) -> None:
+        self.message = _FakeMessage(content)
+
+
+class _FakeChatResponse:
+    def __init__(self, content: str) -> None:
+        self.choices = [_FakeChoice(content)]
+
+
+class _FakeChatCompletions:
+    def __init__(self) -> None:
+        self.last_kwargs = {}
+
+    def create(self, **kwargs):
+        self.last_kwargs = kwargs
+        return _FakeChatResponse("chat patch")
+
+
+class _FakeChat:
+    def __init__(self) -> None:
+        self.completions = _FakeChatCompletions()
+
+
+class _FakeChatClient:
+    def __init__(self) -> None:
+        self.chat = _FakeChat()
+
+
 class OpenAICodePatchAgentTests(unittest.TestCase):
     def test_extract_patch_accepts_fenced_plain_unified_diff(self) -> None:
         response = """
@@ -80,6 +114,24 @@ Thanks!
         )
 
         self.assertEqual(OpenAICodePatchAgent._validate_unified_diff(patch), "")
+
+    def test_generate_text_supports_chat_completions_mode(self) -> None:
+        client = _FakeChatClient()
+
+        text, call_record = OpenAICodePatchAgent._generate_text(
+            client,
+            "chat_completions",
+            label="chat_answer",
+            model="deployment-name",
+            prompt="return a patch",
+        )
+
+        self.assertEqual(text, "chat patch")
+        self.assertEqual(call_record["label"], "chat_answer")
+        self.assertEqual(
+            client.chat.completions.last_kwargs["messages"],
+            [{"role": "user", "content": "return a patch"}],
+        )
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ This directory contains the canonical benchmark task definitions.
 
 For an English task-bank overview with one-line descriptions for every scenario, see:
 
-- [tasks/README.md](/Users/yuan/Documents/GitHub/Agentic_Cloud_Benchmark/tasks/README.md)
+- [tasks/README.md](../README.md)
 
 Scenario sources:
 
@@ -21,9 +21,9 @@ Under each source directory, scenarios are grouped by mode:
 
 Current counts:
 
-- local: `9`
-- GitHub-derived: `45`
-- total: `54`
+- local: `12`
+- GitHub-derived: `49`
+- total: `61`
 
 Current bundles:
 

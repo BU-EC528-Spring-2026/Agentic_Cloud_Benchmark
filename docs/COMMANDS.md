@@ -124,6 +124,16 @@ cp configs/anthropic_direct.example.json configs/anthropic_direct.local.json
 python scripts/run_anthropic_agent_evals.py --config configs/anthropic_direct.local.json
 ```
 
+## Azure OpenAI Agent Batch Runs
+
+Copy the example config, fill the Azure deployment name, resource base URL, and
+API key, then run:
+
+```bash
+cp configs/azure_openai_direct.example.json configs/azure_openai_direct.local.json
+python scripts/run_azure_openai_agent_evals.py --config configs/azure_openai_direct.local.json
+```
+
 ## Generic Agent Batch Runs
 
 Use one provider-agnostic agent profile:
@@ -131,6 +141,7 @@ Use one provider-agnostic agent profile:
 ```bash
 python scripts/run_agent_evals.py --agent-config configs/agents/claude_sonnet.example.json
 python scripts/run_agent_evals.py --agent-config configs/agents/openai_gpt41mini.example.json
+python scripts/run_agent_evals.py --agent-config configs/agents/azure_openai.example.json
 ```
 
 ## Export

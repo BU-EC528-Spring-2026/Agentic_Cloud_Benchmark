@@ -26,8 +26,8 @@ class EvaluateTests(unittest.TestCase):
             output_path=self.output_path,
         )
 
-        self.assertEqual(results["submitted"], 9)
-        self.assertEqual(results["success"], 9)
+        self.assertEqual(results["submitted"], 12)
+        self.assertEqual(results["success"], 12)
         self.assertTrue(self.output_path.exists())
         payload = json.loads(self.output_path.read_text(encoding="utf-8"))
         self.assertIn("code_only_billing_pricing_bundle_threshold", payload["results"])

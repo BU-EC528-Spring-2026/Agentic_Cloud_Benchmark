@@ -19,6 +19,40 @@ class _FakeResponse:
         self.output_text = output_text
 
 
+class _FakeMessage:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class _FakeChoice:
+    def __init__(self, content: str) -> None:
+        self.message = _FakeMessage(content)
+
+
+class _FakeChatResponse:
+    def __init__(self, content: str) -> None:
+        self.choices = [_FakeChoice(content)]
+
+
+class _FakeChatCompletions:
+    def __init__(self) -> None:
+        self.last_kwargs = {}
+
+    def create(self, **kwargs):
+        self.last_kwargs = kwargs
+        return _FakeChatResponse("chat assessment")
+
+
+class _FakeChat:
+    def __init__(self) -> None:
+        self.completions = _FakeChatCompletions()
+
+
+class _FakeChatClient:
+    def __init__(self) -> None:
+        self.chat = _FakeChat()
+
+
 class _FakeClient:
     def __init__(self, outputs: list[str]) -> None:
         self._outputs = list(outputs)
@@ -158,6 +192,24 @@ The answer is below.
 
         self.assertTrue(artifacts["assessment"]["detected"])
         self.assertIn("ASSESSMENT REPAIR", agent.last_response)
+
+    def test_generate_text_supports_chat_completions_mode(self) -> None:
+        client = _FakeChatClient()
+
+        text, call_record = OpenAIOpsAgent._generate_text(
+            client,
+            "chat_completions",
+            label="chat_answer",
+            model="deployment-name",
+            prompt="return json",
+        )
+
+        self.assertEqual(text, "chat assessment")
+        self.assertEqual(call_record["label"], "chat_answer")
+        self.assertEqual(
+            client.chat.completions.last_kwargs["messages"],
+            [{"role": "user", "content": "return json"}],
+        )
 
 
 class FakeOpsAssessmentAgent:
