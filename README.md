@@ -179,7 +179,7 @@ On Windows PowerShell, activate the environment with:
 .venv\Scripts\Activate.ps1
 ```
 
-Please watch the final demo video to verify outputs for all these commands. After installation, check that the CLI is available:
+After installation, check that the CLI is available **(please watch the final demo video to verify outputs for all these commands)**:
 
 ```bash
 acbench --doctor
