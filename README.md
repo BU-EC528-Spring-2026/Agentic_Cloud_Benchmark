@@ -74,22 +74,26 @@ https://BU-EC528-Spring-2026.github.io/Agentic_Cloud_Benchmark/
 
 ## Demo Materials
 
-- Demo 1 slides:
+- **Demo 1 slides:**
   https://docs.google.com/presentation/d/18uKBohMB7DRRD-njSvIdS2JKTllzYnA1pyG13W82V_w/edit?usp=sharing
-- Demo 1 quiz:
+- **Demo 1 quiz:**
   https://forms.gle/cTooPJ68VxmJPmCX9
-- Demo 2 slides:
+- **Demo 2 slides:**
   https://docs.google.com/presentation/d/1BiH5X01uw6wMEDQk1UMuV0lAFUlYDSk5Liz-q4Bc_xU/edit?usp=sharing
-- Demo 2 quiz:
+- **Demo 2 quiz:**
   https://forms.gle/E4e7J8aFsePPqcQK7
-- Demo 2 video:
+- **Demo 2 video:**
   https://drive.google.com/file/d/1etchHhZdAGIIEIhL0kvKwncKADcrtNLP/view?usp=sharing
-- Demo 3 slides:
+- **Demo 3 slides:**
   https://docs.google.com/presentation/d/1bZpHWS_KgUSYJzuqrwFnsRE2VB2u3SMkhQwHIYmuPrk/edit?usp=sharing
-- Demo 3 quiz:
+- **Demo 3 quiz:**
   https://forms.gle/zGEKQNbrwm9oXN4N7
-- Demo 3 video folder:
-  https://drive.google.com/drive/folders/1ZWYpDQBv0KxkpEbihAsVFZSNJ3dfkrct?usp=sharing
+- **Demo 3 video:**
+  https://drive.google.com/file/d/1EbAOPPskl-r468DKBclXKqNw7MhoBN5A/view?usp=sharing
+- **Final demo slides:**
+  https://docs.google.com/presentation/d/1MY85y-QqkPJgykK-D6p7gjqdvWueh6K-1zkNfo0KgD0/edit?usp=sharing
+- **Final demo video:**
+  https://drive.google.com/file/d/1hQiOzCazdugOyYDJHTGVzLvMd2y1yXnP/view?usp=sharing
 
 ## Current Scope
 
@@ -175,7 +179,7 @@ On Windows PowerShell, activate the environment with:
 .venv\Scripts\Activate.ps1
 ```
 
-After installation, check that the CLI is available:
+Please watch the final demo video to verify outputs for all these commands. After installation, check that the CLI is available:
 
 ```bash
 acbench --doctor
