@@ -1,27 +1,27 @@
 const leaderboardRows = [
   {
-    agent: "OpenAI Code + Ops",
-    model: "gpt-4.1-mini",
-    code: 0,
-    ops: 0,
-    combined: 0,
-    scenarios: "54"
+    "agent": "OpenAI Code + Ops",
+    "model": "gpt-4.1-mini",
+    "code": 91.4,
+    "ops": 72.7,
+    "combined": 76.6,
+    "scenarios": "61"
   },
   {
-    agent: "Claude Code + Ops",
-    model: "claude-sonnet-4",
-    code: 0,
-    ops: 0,
-    combined: 0,
-    scenarios: "54"
+    "agent": "Claude Code + Ops",
+    "model": "claude-sonnet-4",
+    "code": 0,
+    "ops": 0,
+    "combined": 0,
+    "scenarios": "54"
   },
   {
-    agent: "Gold Patch Baseline",
-    model: "reference",
-    code: 100,
-    ops: 100,
-    combined: 100,
-    scenarios: "54"
+    "agent": "Gold Patch Baseline",
+    "model": "reference",
+    "code": 100,
+    "ops": 100,
+    "combined": 100,
+    "scenarios": "54"
   }
 ];
 

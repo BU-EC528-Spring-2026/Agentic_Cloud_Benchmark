@@ -58,6 +58,7 @@ def run_single_command(command: str, repo_path: Path) -> subprocess.CompletedPro
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
             env=env,
         )
     return subprocess.run(
@@ -66,6 +67,7 @@ def run_single_command(command: str, repo_path: Path) -> subprocess.CompletedPro
         capture_output=True,
         text=True,
         encoding="utf-8",
+        errors="replace",
         env=env,
         shell=True,
     )
@@ -119,6 +121,7 @@ def capture_git_diff(repo_path: str | Path) -> str:
         capture_output=True,
         text=True,
         encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         return ""
@@ -145,6 +148,7 @@ def apply_patch(repo_path: str | Path, patch_file: str | Path) -> tuple[bool, st
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
         )
         output = (
             f"$ git apply --reject --whitespace=nowarn {patch_path}\n"
