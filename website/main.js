@@ -9,11 +9,11 @@ const leaderboardRows = [
   },
   {
     "agent": "Claude Code + Ops",
-    "model": "claude-sonnet-4",
-    "code": 0,
-    "ops": 0,
-    "combined": 0,
-    "scenarios": "54"
+    "model": "claude-sonnet-4-6",
+    "code": 99.2,
+    "ops": 78.5,
+    "combined": 89.6,
+    "scenarios": "61"
   },
   {
     "agent": "Gold Patch Baseline",
